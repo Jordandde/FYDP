@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 
+
 function App() {
+
+  let postPort = 0xB00B;
   const [matrix, setMatrix] = useState([
     ['', '', ''],
     ['', '', ''],
@@ -18,7 +21,7 @@ function App() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('http://localhost:5050/matrix', { matrix: matrix });
+      const response = await axios.post('http://localhost:' + postPort + '/matrix', { matrix: matrix });
       console.log(response.data);
       alert('Matrix sent successfully!');
     } catch (error) {

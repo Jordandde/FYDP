@@ -12,10 +12,13 @@ type Message struct {
 	Matrix [][]string `json:"matrix"`
 }
 
-// Exported function to start listening on port 5050 and handle incoming JSON messages
+// Listen for any calls on POSTPORT and direct them to the correct endpoint
 func ListenAndServe() {
+
 	http.HandleFunc("/matrix", postHandler) // Set the handler function for the root path
+
 	fmt.Printf("Server is listening on port %d...", POSTPORT)
+
 	if err := http.ListenAndServe(fmt.Sprintf(":%d", POSTPORT), nil); err != nil {
 		fmt.Printf("Error starting server: %s\n", err)
 	}

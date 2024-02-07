@@ -6,9 +6,9 @@ function App() {
 
   let postPort = 0xB00B;
   const [matrix, setMatrix] = useState([
-    ['', '', ''],
-    ['', '', ''],
-    ['', '', '']
+    ['', '', '',''],
+    ['', '', '',''],
+    ['', '', '','']
   ]);
 
   const handleChange = (row, col, value) => {

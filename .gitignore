@@ -1,1 +1,5 @@
 /backend/backend
+.vscode/settings.json
+backend/backend
+backend/main
+frontend/src/App.js

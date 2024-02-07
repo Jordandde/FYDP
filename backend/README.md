@@ -22,3 +22,12 @@ build this in the backend directory by running ```go build```
 
 ## Running
 Run this from the backend directory by running ```./backend```
+
+# C++
+Was struggling with Go. For the sake of speed and being able to work effectively in parallel, I translated the backend into C++...
+
+## Building (C++)
+`g++ -std=c++17 -o main main.cpp -lboost_system`
+
+## Running (C++)
+`./main`

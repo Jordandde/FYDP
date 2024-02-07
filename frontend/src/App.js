@@ -1,55 +1,71 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 
-
 function App() {
 
   let postPort = 0xB00B;
-  const [matrix, setMatrix] = useState([
-    ['', '', '',''],
-    ['', '', '',''],
-    ['', '', '',''],
-    ['', '', '','']
+  const [matrices, setMatrices] = useState([
+    [
+      ['', '', '', ''],
+      ['', '', '', ''],
+      ['', '', '', ''],
+      ['', '', '', '']
+    ],
+    [
+      ['', '', '', ''],
+      ['', '', '', ''],
+      ['', '', '', ''],
+      ['', '', '', '']
+    ]
   ]);
 
-  const handleChange = (row, col, value) => {
-    const newMatrix = matrix.map((r, ri) => (
-      r.map((c, ci) => (ri === row && ci === col ? value : c))
-    ));
-    setMatrix(newMatrix);
+  const handleChange = (matrixIndex, row, col, value) => {
+    const newMatrices = matrices.map((matrix, i) => {
+      if (i === matrixIndex) {
+        return matrix.map((r, ri) => (
+          r.map((c, ci) => (ri === row && ci === col ? value : c))
+        ));
+      }
+      return matrix;
+    });
+    setMatrices(newMatrices);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('http://localhost:' + postPort + '/matrix', { matrix: matrix });
+      const response = await axios.post('http://localhost:' + postPort + '/matrices', { matrices });
       console.log(response.data);
-      alert('Matrix sent successfully!');
+      alert('Matrices sent successfully!');
     } catch (error) {
-      console.error('Error sending matrix:', error);
-      alert('Failed to send matrix.');
+      console.error('Error sending matrices:', error);
+      alert('Failed to send matrices.');
     }
   };
 
   return (
     <div className="App">
       <form onSubmit={handleSubmit}>
-        <h2>Enter a 4x4 Matrix</h2>
-        {matrix.map((row, rowIndex) => (
-          <div key={rowIndex}>
-            {row.map((col, colIndex) => (
-              <input
-                key={`${rowIndex}-${colIndex}`}
-                type="text"
-                value={col}
-                onChange={(e) => handleChange(rowIndex, colIndex, e.target.value)}
-                style={{ width: '50px', marginRight: '10px' }}
-              />
+        {matrices.map((matrix, matrixIndex) => (
+          <div key={matrixIndex}>
+            <h2>Enter a 4x4 Matrix ({matrixIndex + 1})</h2>
+            {matrix.map((row, rowIndex) => (
+              <div key={rowIndex}>
+                {row.map((col, colIndex) => (
+                  <input
+                    key={`${matrixIndex}-${rowIndex}-${colIndex}`}
+                    type="text"
+                    value={col}
+                    onChange={(e) => handleChange(matrixIndex, rowIndex, colIndex, e.target.value)}
+                    style={{ width: '50px', marginRight: '10px' }}
+                  />
+                ))}
+                <br />
+              </div>
             ))}
-            <br />
           </div>
         ))}
-        <button type="submit">Send Matrix</button>
+        <button type="submit">Send Matrices</button>
       </form>
     </div>
   );

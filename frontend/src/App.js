@@ -8,6 +8,7 @@ function App() {
   const [matrix, setMatrix] = useState([
     ['', '', '',''],
     ['', '', '',''],
+    ['', '', '',''],
     ['', '', '','']
   ]);
 

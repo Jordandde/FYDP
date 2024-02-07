@@ -16,3 +16,9 @@ The backend should do 4 things:
 
 ## Technology
 The backend should consist of a simple http server. I propose that we use Go for this, as it is the main use of Go and debugging it is extremely easy. Alternatives include Python, CPP, Rust, and C.
+
+Patrick: Noted. I'd prefer to use C++ due to familiarity
+
+## Build Command
+On Mac OS: 
+`clang++ -std=c++17 -I /usr/local/Cellar/boost/1.84.0/include -L /usr/local/Cellar/boost/1.84.0/lib -lboost_system main.cpp -o main` 

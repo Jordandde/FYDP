@@ -33,7 +33,7 @@ function App() {
   return (
     <div className="App">
       <form onSubmit={handleSubmit}>
-        <h2>Enter a 3x3 Matrix</h2>
+        <h2>Enter a 4x4 Matrix</h2>
         {matrix.map((row, rowIndex) => (
           <div key={rowIndex}>
             {row.map((col, colIndex) => (

@@ -10,7 +10,7 @@ type Message struct {
 	Matrix [][]string `json:"matrix"`
 }
 
-// Exported function to start listening on port 5000 and handle incoming JSON messages
+// Exported function to start listening on port 5050 and handle incoming JSON messages
 func ListenAndServe() {
 	http.HandleFunc("/matrix", postHandler) // Set the handler function for the root path
 	fmt.Println("Server is listening on port 5050...")
@@ -21,7 +21,6 @@ func ListenAndServe() {
 
 // Handles incoming HTTP POST requests at the root path
 func postHandler(w http.ResponseWriter, r *http.Request) {
-	// Only allow POST requests
 	// Enable CORS for local testing
 	header := w.Header()
 	header.Add("Access-Control-Allow-Origin", "*")

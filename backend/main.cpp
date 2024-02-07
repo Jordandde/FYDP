@@ -1,5 +1,6 @@
 #include <iostream>
 #include <boost/asio.hpp>
+#include <cstdint>
 #include "include/nlohmann/json.hpp"
 
 using namespace boost::asio;
@@ -9,18 +10,32 @@ using namespace boost::asio;
 // Define the structure for storing matrices
 class Matrices {
     public:
-        // TODO: Make these floats
-        std::vector<std::vector<std::string>> input_matrix_1;
-        std::vector<std::vector<std::string>> input_matrix_2;
-        std::vector<std::vector<std::string>> result_matrix;
+        // TODO: Make a matrix class to make it easier to get their dimensions and other things
+        std::vector<std::vector<float>> input_matrix_1;
+        std::vector<std::vector<float>> input_matrix_2;
+        std::vector<std::vector<float>> result_matrix;
 
         Matrices(std::vector<std::vector<std::string>> input1, std::vector<std::vector<std::string>> input2)
         {
-            input_matrix_1 = input1;
-            input_matrix_2 = input2;
+            // Convert input1 and input2 to float and store them in input_matrix_1 and input_matrix_2
+            for (const auto& row : input1) {
+                std::vector<float> float_row;
+                for (const auto& cell : row) {
+                    float_row.push_back(std::stof(cell));
+                }
+                input_matrix_1.push_back(float_row);
+            }
+            for (const auto& row : input2) {
+                std::vector<float> float_row;
+                for (const auto& cell : row) {
+                    float_row.push_back(std::stof(cell));
+                }
+                input_matrix_2.push_back(float_row);
+            }
+
             int num_rows_output = input1.size();
             int num_cols_output = input2[0].size();
-            result_matrix.resize(num_rows_output, std::vector<std::string>(num_cols_output, "0"));
+            result_matrix.resize(num_rows_output, std::vector<float>(num_cols_output, 0.0F));
         }
 };
 
@@ -94,18 +109,28 @@ void handle_request(const std::string& request, ip::tcp::socket& socket) {
             std::cout << std::endl;
         }
 
+        // CONVERT FLOATS TO FPGA/HARDWARE FRIENDLY FORMAT, PROBABLY INTS??
         // TALK WITH FPGA AND GET RESULTS
-
         // SCALE RESULTS "12-bit dac with 4.096 reference voltage -> analog switch with 15ohms of resistance 
         // -> analog multipler that divides the result by a factor of 10 -> 16-bit adc with 4.096 reference voltage"
 
         // UPDATE RESULT MATRIX
+        // TODO: REMOVE THIS DUMMY OPERATION
+        // Multiply matrices 1 and 2 and store the result in the result matrix
+        // TODO: This is a leetcode question I think LOL
+        for (int i = 0; i < matrices.input_matrix_1.size(); i++) {
+            for (int j = 0; j < matrices.input_matrix_2[0].size(); j++) {
+                for (int k = 0; k < matrices.input_matrix_2.size(); k++) {
+                    matrices.result_matrix[i][j] += matrices.input_matrix_1[i][k] * matrices.input_matrix_2[k][j];
+                }
+            }
+        }
 
         // Print result matrix for debugging
         std::cout << "Result Matrix:" << std::endl;
         for (const auto& row : matrices.result_matrix) {
             for (const auto& cell : row) {
-                std::cout << cell << " ";
+                printf("%.2f ", cell);
             }
             std::cout << std::endl;
         }
@@ -174,9 +199,6 @@ void start_server() {
             } else {
                 // Trim the request string to actual size
                 request.resize(bytes_transferred);
-
-                // std::cout << "Transferred " << bytes_transferred << " bytes." << std::endl;
-                // std::cout << "Request received: " << request << std::endl;
 
                 // Process the request
                 handle_request(request, socket);

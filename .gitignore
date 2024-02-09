@@ -3,3 +3,4 @@
 backend/backend
 backend/main
 frontend/src/App.js
+.DS_Store

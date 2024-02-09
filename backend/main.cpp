@@ -1,44 +1,23 @@
+// *********************************************************************
+// ||                            INCLUDES                             ||
+// *********************************************************************
 #include <iostream>
 #include <boost/asio.hpp>
 #include <cstdint>
 #include "include/nlohmann/json.hpp"
+#include "matrix.hpp"
 
 using namespace boost::asio;
 
+// *********************************************************************
+// ||                             DEFINES                             ||
+// *********************************************************************
 #define POST_PORT 0xB00B
 
-// Define the structure for storing matrices
-class Matrices {
-    public:
-        // TODO: Make a matrix class to make it easier to get their dimensions and other things
-        std::vector<std::vector<float>> input_matrix_1;
-        std::vector<std::vector<float>> input_matrix_2;
-        std::vector<std::vector<float>> result_matrix;
-
-        Matrices(std::vector<std::vector<std::string>> input1, std::vector<std::vector<std::string>> input2)
-        {
-            // Convert input1 and input2 to float and store them in input_matrix_1 and input_matrix_2
-            for (const auto& row : input1) {
-                std::vector<float> float_row;
-                for (const auto& cell : row) {
-                    float_row.push_back(std::stof(cell));
-                }
-                input_matrix_1.push_back(float_row);
-            }
-            for (const auto& row : input2) {
-                std::vector<float> float_row;
-                for (const auto& cell : row) {
-                    float_row.push_back(std::stof(cell));
-                }
-                input_matrix_2.push_back(float_row);
-            }
-
-            int num_rows_output = input1.size();
-            int num_cols_output = input2[0].size();
-            result_matrix.resize(num_rows_output, std::vector<float>(num_cols_output, 0.0F));
-        }
-};
-
+// *********************************************************************
+// ||                            FUNCTIONS                            ||
+// *********************************************************************
+// AI did this, I have no idea if this is legit -Pat
 void handle_options_request(ip::tcp::socket& socket) {
     // Send CORS headers for preflight request
     std::string response = "HTTP/1.1 200 OK\r\n";
@@ -117,10 +96,10 @@ void handle_request(const std::string& request, ip::tcp::socket& socket) {
         // UPDATE RESULT MATRIX
         // TODO: REMOVE THIS DUMMY OPERATION
         // Multiply matrices 1 and 2 and store the result in the result matrix
-        // TODO: This is a leetcode question I think LOL
-        for (int i = 0; i < matrices.input_matrix_1.size(); i++) {
-            for (int j = 0; j < matrices.input_matrix_2[0].size(); j++) {
-                for (int k = 0; k < matrices.input_matrix_2.size(); k++) {
+        // This is a leetcode question I think LOL
+        for (int i = 0; i < matrices.input_matrix_1.get_num_cols(); i++) {
+            for (int j = 0; j < matrices.input_matrix_2.get_num_rows(); j++) {
+                for (int k = 0; k < matrices.input_matrix_2.get_num_cols(); k++) {
                     matrices.result_matrix[i][j] += matrices.input_matrix_1[i][k] * matrices.input_matrix_2[k][j];
                 }
             }
@@ -135,8 +114,10 @@ void handle_request(const std::string& request, ip::tcp::socket& socket) {
             std::cout << std::endl;
         }
 
+        // AI did these, I have no idea if this is legit -Pat
         // Send a response back to the frontend with CORS headers
-        std::string response = "Matrices received successfully!";
+        // std::string response = "Matrices received successfully!";
+        std::string response = matrices.result_matrix.to_string();
         boost::asio::streambuf response_buf;
         std::ostream response_stream(&response_buf);
         response_stream << "HTTP/1.1 200 OK\r\n";
@@ -162,6 +143,7 @@ void handle_request(const std::string& request, ip::tcp::socket& socket) {
 
 }
 
+// Completely AI-cooked, I have no idea what's going on here but it looks alright to me and it works
 void start_server() {
     try {
         // Create io_context
@@ -189,6 +171,8 @@ void start_server() {
                 bytes_transferred = socket.read_some(boost::asio::buffer(buffer), error);
                 request.append(buffer, buffer + bytes_transferred);
             } while (0);
+            // Idk why but the original thing chatgpt suggested was this with no loop and the requests would just be zero length?? 
+            // Then it suggested do-while(bytes_transferred > 0) but that would just hang forever so I just put 0 and it works fine
 
             if (error == boost::asio::error::eof) {
                 // Connection closed cleanly by peer

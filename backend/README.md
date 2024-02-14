@@ -16,3 +16,18 @@ The backend should do 4 things:
 
 ## Technology
 The backend should consist of a simple http server. I propose that we use Go for this, as it is the main use of Go and debugging it is extremely easy. Alternatives include Python, CPP, Rust, and C.
+
+## Building
+build this in the backend directory by running ```go build```
+
+## Running
+Run this from the backend directory by running ```./backend```
+
+# C++
+Was struggling with Go. For the sake of speed and being able to work effectively in parallel, I translated the backend into C++...
+
+## Building (C++)
+`g++ -std=c++17 -o main main.cpp -lboost_system`
+
+## Running (C++)
+`./main`

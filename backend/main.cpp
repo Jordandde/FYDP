@@ -14,6 +14,8 @@ using namespace boost::asio;
 // *********************************************************************
 #define POST_PORT 0xB00B
 #define FPGA_PAYLOAD_DIMS_SIZE 4 // num_rows1, num_cols1, num_rows2, num_cols2
+#define FPGA_ADDR "192.168.1.10"
+#define FPGA_PORT "5001"
 
 // *********************************************************************
 // ||                            FUNCTIONS                            ||
@@ -154,37 +156,40 @@ void handle_request(const std::string &request, ip::tcp::socket &socket)
 
         // TALK WITH FPGA AND GET RESULTS
         // Boilerplate from ChatGPT (does this socket connection stuff have to happen every time?? Or can it be put in main() and run once?)
-        // boost::asio::io_context io_context;
+        boost::asio::io_context io_context;
 
-        // // Resolve the server address and port
-        // tcp::resolver resolver(io_context);
-        // tcp::resolver::results_type endpoints = resolver.resolve(server_address, server_port);
+        // Resolve the server address and port
+        ip::tcp::resolver resolver(io_context);
+        ip::tcp::resolver::query query(FPGA_ADDR, FPGA_PORT);
+        ip::tcp::resolver::results_type endpoints = resolver.resolve(query);
 
-        // // Establish a connection to the server
-        // tcp::socket socket(io_context);
-        // boost::asio::connect(socket, endpoints);
-
-        // // Send data to the server
+        // Establish a connection to the server
+        ip::tcp::socket socket(io_context);
+        std::cout << "Connecting to FPGA..." << std::endl;
+        boost::asio::connect(socket, endpoints);
+        std::cout << "Connected to FPGA..." << std::endl;
         
         // Send the payload to the FPGA
-        // boost::asio::write(socket, boost::asio::buffer((void*)out_fpga_payload, out_fpga_payload_size * sizeof(int));
+        std::cout << "Sending to FPGA..." << std::endl;
+        boost::asio::write(socket, boost::asio::buffer((void*)out_fpga_payload, out_fpga_payload_size * sizeof(int)));
+        std::cout << "Sent to FPGA..." << std::endl;
 
         free(out_fpga_payload);
         
 
         // Receive the result from the FPGA
-        // size_t in_fpga_payload_size = matrices.result_matrix.get_num_rows() * matrices.result_matrix.get_num_cols();
+        size_t in_fpga_payload_size = matrices.result_matrix.get_num_rows() * matrices.result_matrix.get_num_cols();
 
-        // int* in_fpga_payload = (int*)malloc(in_fpga_payload_size * sizeof(int));
+        int* in_fpga_payload = (int*)malloc(in_fpga_payload_size * sizeof(int));
 
-        // size_t bytes_transferred = socket.read_some(boost::asio::buffer((void*)in_fpga_payload, in_fpga_payload_size * sizeof(int));
+        size_t bytes_transferred = socket.read_some(boost::asio::buffer((void*)in_fpga_payload, in_fpga_payload_size * sizeof(int)));
         // Print result from FPGA
-        // std::cout << "In FPGA Payload:" << std::endl;
-        // for (int i = 0; i < in_fpga_payload_size; i++)
-        // {
-        //     std::cout << in_fpga_payload[i];
-        // }
-        // std::cout << std::endl;
+        std::cout << "In FPGA Payload:" << std::endl;
+        for (int i = 0; i < in_fpga_payload_size; i++)
+        {
+            std::cout << in_fpga_payload[i];
+        }
+        std::cout << std::endl;
 
         // SCALE RESULTS "12-bit dac with 4.096 reference voltage -> analog switch with 15ohms of resistance
         // -> analog multipler that divides the result by a factor of 10 -> 16-bit adc with 4.096 reference voltage"

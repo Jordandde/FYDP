@@ -19,7 +19,7 @@ The backend should consist of a simple http server. C++ will be used for this, l
 
 ## Building
 Make sure you have xcode command line tools installed on Mac OS.
-`g++ -std=c++17 -o main main.cpp -lboost_system`
+`g++ -Wall -std=c++17 -o main main.cpp -lboost_system && ./main`
 
 ## Running
 `./main`

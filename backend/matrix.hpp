@@ -18,7 +18,7 @@ class Matrix {
         int num_cols;
 
     public:
-        // Define the iterator for the matrix
+        // Default constructor for matrix
         Matrix() {
             num_rows = 0;
             num_cols = 0;

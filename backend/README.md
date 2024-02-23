@@ -18,8 +18,26 @@ The backend should do 4 things:
 The backend should consist of a simple http server. C++ will be used for this, largely for the sake of speed and being able to work effectively in parallel.
 
 ## Building
-Make sure you have xcode command line tools installed on Mac OS.
-`g++ -Wall -std=c++17 -o main main.cpp -lboost_system && ./main`
+Make sure you have xcode command line tools installed on Mac OS, as well as boost:
+
+`xcode-select --install`
+
+`brew install boost`
+
+`clang++ -Wall -std=c++17 -o main main.cpp -lboost_system -lboost_program_options && ./main`
 
 ## Running
 `./main`
+
+## Command-line Arguments
+The `main` program accepts the following command-line arguments:
+
+- `--help`: Produces a help message that lists all the available command-line arguments.
+
+- `--no_frontend`: If this flag is set, the front-end is not included in the loop and fake input is used instead.
+
+- `--no_fpga`: If this flag is set, the FPGA is not included in the loop and fake output is used instead.
+
+For example, to run the program with no frontend and no fpga, you would use:
+
+`./main --no_frontend --no_fpga`

@@ -2,12 +2,13 @@
 // ||                            INCLUDES                             ||
 // *********************************************************************
 #include <iostream>
-#include <boost/asio.hpp>
+#include <boost/program_options.hpp>
 #include <cstdint>
 #include "include/nlohmann/json.hpp"
 #include "matrix.hpp"
+#include "http_stuff.hpp"
 
-using namespace boost::asio;
+
 
 // *********************************************************************
 // ||                             DEFINES                             ||
@@ -17,53 +18,13 @@ using namespace boost::asio;
 #define FPGA_ADDR "192.168.1.10"
 #define FPGA_PORT "5001"
 
+namespace po = boost::program_options;
+
 // *********************************************************************
-// ||                            FUNCTIONS                            ||
+// ||                           GLOBAL VARS                           ||
 // *********************************************************************
-// AI did this, I have no idea if this is legit -Pat
-void handle_options_request(ip::tcp::socket &socket)
-{
-    // Send CORS headers for preflight request
-    std::string response = "HTTP/1.1 200 OK\r\n";
-    response += "Access-Control-Allow-Origin: *\r\n";
-    response += "Access-Control-Allow-Methods: DELETE, POST, GET, OPTIONS\r\n";
-    response += "Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With\r\n";
-    response += "Content-Length: 0\r\n\r\n";
-    boost::asio::write(socket, boost::asio::buffer(response));
-}
-
-void send_good_response(ip::tcp::socket &socket, const std::string &response)
-{
-    boost::asio::streambuf response_buf;
-    std::ostream response_stream(&response_buf);
-    response_stream << "HTTP/1.1 200 OK\r\n";
-    response_stream << "Content-Type: text/plain\r\n";
-    response_stream << "Access-Control-Allow-Origin: *\r\n"; // Enable CORS for all origins
-    response_stream << "Content-Length: " << response.size() << "\r\n\r\n";
-    response_stream << response;
-    boost::asio::write(socket, response_buf);
-}
-
-void send_bad_response(ip::tcp::socket &socket, const std::string &response)
-{
-    boost::asio::streambuf response_buf;
-    std::ostream response_stream(&response_buf);
-    response_stream << "HTTP/1.1 400 Bad Request\r\n";
-    response_stream << "Content-Type: text/plain\r\n";
-    response_stream << "Access-Control-Allow-Origin: *\r\n"; // Enable CORS for all origins
-    response_stream << "Content-Length: " << response.size() << "\r\n\r\n";
-    response_stream << response;
-    boost::asio::write(socket, response_buf);
-}
-
-void send_method_not_allowed_response(ip::tcp::socket &socket)
-{
-    std::string response = "HTTP/1.1 405 Method Not Allowed\r\n";
-    response += "Content-Type: text/plain\r\n";
-    response += "Access-Control-Allow-Origin: *\r\n"; // Enable CORS for all origins
-    response += "Content-Length: 0\r\n\r\n";
-    boost::asio::write(socket, boost::asio::buffer(response));
-}
+bool FPGA_IN_LOOP = true;
+bool FRONTEND_IN_LOOP = true;
 
 int* create_out_fpga_payload(Matrices &matrices, const size_t out_fpga_payload_size)
 {
@@ -170,10 +131,13 @@ void handle_request(const std::string &request, ip::tcp::socket &frontend_socket
 
         int* out_fpga_payload = create_out_fpga_payload(matrices, out_fpga_payload_size);
         
-        // Send the payload to the FPGA
-        std::cout << "Sending to FPGA..." << std::endl;
-        // boost::asio::write(fpga_socket, boost::asio::buffer((void*)out_fpga_payload, out_fpga_payload_size * sizeof(int)));
-        std::cout << "Sent to FPGA..." << std::endl;
+        if (FPGA_IN_LOOP)
+        {
+            // Send the payload to the FPGA
+            std::cout << "Sending to FPGA..." << std::endl;
+            boost::asio::write(fpga_socket, boost::asio::buffer((void*)out_fpga_payload, out_fpga_payload_size * sizeof(int)));
+            std::cout << "Sent to FPGA..." << std::endl;
+        }
 
         free(out_fpga_payload);
       
@@ -181,34 +145,39 @@ void handle_request(const std::string &request, ip::tcp::socket &frontend_socket
         size_t in_fpga_payload_size = matrices.result_matrix.get_num_rows() * matrices.result_matrix.get_num_cols();
         int* in_fpga_payload = (int*)malloc(in_fpga_payload_size * sizeof(int));
 
-        std::cout << "Waiting for response from FPGA..." << std::endl;
-        // size_t bytes_transferred = fpga_socket.read_some(boost::asio::buffer((void*)in_fpga_payload, in_fpga_payload_size * sizeof(int)));
-        std::cout << "Received from FPGA..." << std::endl;
+        std::cout << "in_fpga_payload_size = " << in_fpga_payload_size << std::endl;
 
-        // Print result from FPGA
-        std::cout << "In FPGA Payload:" << std::endl;
-        for (int i = 0; i < in_fpga_payload_size; i++)
+        if (FPGA_IN_LOOP)
         {
-            std::cout << in_fpga_payload[i];
-        }
-        std::cout << std::endl;
-
-        // SCALE RESULTS "12-bit dac with 4.096 reference voltage -> analog switch with 15ohms of resistance
-        // -> analog multipler that divides the result by a factor of 10 -> 16-bit adc with 4.096 reference voltage"
-
-        // UPDATE RESULT MATRIX
-        // TODO: REMOVE THIS DUMMY OPERATION
-        // Multiply matrices 1 and 2 and store the result in the result matrix
-        // This is a leetcode question I think LOL
-        for (int i = 0; i < matrices.input_matrix_1.get_num_cols(); i++)
-        {
-            for (int j = 0; j < matrices.input_matrix_2.get_num_rows(); j++)
+            // Send matrices to FPGA for calculation
+            std::cout << "Waiting for response from FPGA..." << std::endl;
+            size_t bytes_transferred = fpga_socket.read_some(boost::asio::buffer((void*)in_fpga_payload, in_fpga_payload_size * sizeof(int)));
+            (void) bytes_transferred; // maybe do something with this idk
+            std::cout << "Received from FPGA..." << std::endl;
+            // Print result from FPGA
+            std::cout << "In FPGA Payload:" << std::endl;
+            for (int i = 0; i < in_fpga_payload_size; i++)
             {
-                for (int k = 0; k < matrices.input_matrix_2.get_num_cols(); k++)
+                std::cout << in_fpga_payload[i];
+            }
+            std::cout << std::endl;
+
+            // Update result matrix with the result from the FPGA
+            int pos = 0;
+            for (int i = 0; i < matrices.result_matrix.get_num_rows(); i++)
+            {
+                for (int j = 0; j < matrices.result_matrix.get_num_cols(); j++)
                 {
-                    matrices.result_matrix[i][j] += matrices.input_matrix_1[i][k] * matrices.input_matrix_2[k][j];
+                    // SCALE RESULTS "12-bit dac with 4.096 reference voltage -> analog switch with 15ohms of resistance
+                    // -> analog multipler that divides the result by a factor of 10 -> 16-bit adc with 4.096 reference voltage"
+                    matrices.result_matrix[i][j] = in_fpga_payload[pos++];
                 }
             }
+        }
+        else
+        {
+            // Multiply matrices 1 and 2 and store the result in the result matrix
+            matrices.result_matrix = matrices.input_matrix_1 * matrices.input_matrix_2;
         }
 
         // Print result matrix for debugging
@@ -217,7 +186,10 @@ void handle_request(const std::string &request, ip::tcp::socket &frontend_socket
 
         // Send response with result matrix back to the front-end
         std::string response = matrices.result_matrix.to_string();
-        send_good_response(frontend_socket, response);
+        if (FPGA_IN_LOOP)
+        {
+            send_good_response(frontend_socket, response);
+        }
     }
     catch (const std::exception &e)
     {
@@ -237,11 +209,17 @@ void start_server()
         // Create frontend socket and establish connection
         boost::asio::io_context io;
         ip::tcp::acceptor acceptor(io, ip::tcp::endpoint(ip::tcp::v4(), POST_PORT));
-        std::cout << "Server started. Waiting for incoming connections..." << std::endl;
         ip::tcp::socket frontend_socket(io);
-        std::cout << "Waiting for client to connect..." << std::endl;
-        acceptor.accept(frontend_socket);
-        std::cout << "Client connected..." << std::endl;
+        if (FRONTEND_IN_LOOP)
+        {
+            std::cout << "Waiting for client to connect..." << std::endl;
+            acceptor.accept(frontend_socket);
+            std::cout << "Client connected..." << std::endl;
+        }
+        else
+        {
+            std::cout << "Skipping connection to frontend..." << std::endl;
+        }
 
         // Create FPGA socket and establish connection
         boost::asio::io_context io_context;
@@ -249,38 +227,53 @@ void start_server()
         ip::tcp::resolver::query query(FPGA_ADDR, FPGA_PORT);
         ip::tcp::resolver::results_type endpoints = resolver.resolve(query);
         ip::tcp::socket fpga_socket(io_context);
-        std::cout << "Connecting to FPGA..." << std::endl;
-        // boost::asio::connect(fpga_socket, endpoints);
-        std::cout << "Connected to FPGA..." << std::endl;
+        if (FPGA_IN_LOOP)
+        {
+            std::cout << "Connecting to FPGA..." << std::endl;
+            boost::asio::connect(fpga_socket, endpoints);
+            std::cout << "Connected to FPGA..." << std::endl;
+        }
+        else
+        {
+            std::cout << "Skipping connection to FPGA..." << std::endl;
+        }
 
         // Start handling incoming requests
         while (true)
         {
             // Read request data from the client
             std::string request;
-            boost::system::error_code error;
-            size_t bytes_transferred;
-            char buffer[1024]; // Adjust buffer size as needed
-            bytes_transferred = frontend_socket.read_some(boost::asio::buffer(buffer), error);
-            request.append(buffer, buffer + bytes_transferred);
+            if (FRONTEND_IN_LOOP)
+            {
+                boost::system::error_code error;
+                size_t bytes_transferred;
+                char buffer[1024]; // Adjust buffer size as needed
+                bytes_transferred = frontend_socket.read_some(boost::asio::buffer(buffer), error);
+                request.append(buffer, buffer + bytes_transferred);
 
-            if (error == boost::asio::error::eof)
-            {
-                // Connection closed cleanly by peer
-                std::cout << "Connection closed by peer." << std::endl;
-            }
-            else if (error)
-            {
-                // Some other error
-                throw boost::system::system_error(error); // Rethrow the error
+                if (error == boost::asio::error::eof)
+                {
+                    // Connection closed cleanly by peer
+                    std::cout << "Connection closed by peer." << std::endl;
+                }
+                else if (error)
+                {
+                    // Some other error
+                    throw boost::system::system_error(error); // Rethrow the error
+                }
+                else
+                {
+                    // Trim the request string to actual size
+                    request.resize(bytes_transferred);
+
+                    // Process the request
+                    handle_request(request, frontend_socket, fpga_socket);
+                }
             }
             else
             {
-                // Trim the request string to actual size
-                request.resize(bytes_transferred);
-
-                // Process the request
-                handle_request(request, frontend_socket, fpga_socket);
+                // Process a dummy request
+                handle_request(std::string(DUMMY_FRONTEND_INPUT), frontend_socket, fpga_socket);
             }
         }
     }
@@ -290,8 +283,40 @@ void start_server()
     }
 }
 
-int main()
+int main(int argc, char* argv[])
 {
+    po::options_description desc("Allowed options");
+    desc.add_options()
+        ("help", "produce help message")
+        ("no_frontend", "whether or not front-end is in the loop (fake input if this flag is true)")
+        ("no_fpga", "whether or not FPGA is in the loop (fake output if this flag is true)")
+    ;
+
+    po::variables_map vm;
+    po::store(po::parse_command_line(argc, argv, desc), vm);
+    po::notify(vm);
+
+    if (vm.count("help")) {
+        std::cout << desc << "\n";
+        return 1;
+    }
+    
+    if (vm.count("no_frontend")) {
+        std::cout << "No front-end in the loop " << std::endl;
+        FRONTEND_IN_LOOP = false;
+    } else {
+        std::cout << "Front-end in the loop" << std::endl;
+        FRONTEND_IN_LOOP = true;
+    }
+
+    if (vm.count("no_fpga")) {
+        std::cout << "No FPGA in the loop " << std::endl;
+        FPGA_IN_LOOP = false;
+    } else {
+        std::cout << "FPGA in the loop" << std::endl;
+        FPGA_IN_LOOP = true;
+    }
+
     start_server();
     return 0;
 }

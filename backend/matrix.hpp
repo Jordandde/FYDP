@@ -86,6 +86,28 @@ class Matrix {
             return matrix[index];
         }
 
+        // Implement * operator to perform matrix multiplication
+        Matrix operator*(Matrix &other) {
+            // Check if the matrices can be multiplied
+            if (num_cols != other.get_num_rows()) {
+                throw std::invalid_argument("Matrices cannot be multiplied");
+            }
+
+            // Initialize result matrix
+            Matrix result(num_rows, other.get_num_cols());
+
+            // Perform matrix multiplication
+            for (int i = 0; i < num_rows; i++) {
+                for (int j = 0; j < other.get_num_cols(); j++) {
+                    for (int k = 0; k < num_cols; k++) {
+                        result[i][j] += matrix[i][k] * other[k][j];
+                    }
+                }
+            }
+
+            return result;
+        }
+
         // Make matrix iterable
         std::vector<std::vector<float>>::iterator begin() {
             return matrix.begin();

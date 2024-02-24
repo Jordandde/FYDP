@@ -1,45 +1,42 @@
-import React, { useState } from 'react';
-import axios from 'axios';
+import React, { useState } from "react";
+import axios from "axios";
+import { useSelector, useDispatch } from "react-redux";
+import { updateDimensions, updateValue } from "./matricesSlice";
 
 function App() {
-  let postPort = 0xB00B;
-  const [rows, setRows] = useState(4);
-  const [cols, setCols] = useState(4);
+  let postPort = 0xb00b;
   const [submitted, setSubmitted] = useState(false);
   const [calcFinished, setCalcFinished] = useState(false);
   const [tempRows, setTempRows] = useState(4);
   const [tempCols, setTempCols] = useState(4);
-  const [matrices, setMatrices] = useState([
-    Array.from({ length: 4 }, () => Array.from({ length: 4 }, () => '0')),
-    Array.from({ length: 4 }, () => Array.from({ length: 4 }, () => '0'))
-  ]);
+  const matrixArray = useSelector((state) => state.matrixArray);
+  const rows = useSelector((state) => state.rows);
+  const cols = useSelector((state) => state.cols);
+
   const [result, setResult] = useState([
-    Array.from({ length: 4 }, () => Array.from({ length: 4 }, () => '0')),
+    Array.from({ length: 4 }, () => Array.from({ length: 4 }, () => "0")),
   ]);
+
+  const dispatch = useDispatch();
 
   const handleChange = (matrixIndex, row, col, value) => {
     setSubmitted(false);
     setCalcFinished(false);
-    const newMatrices = matrices.map((matrix, i) => {
-      if (i === matrixIndex) {
-        return matrix.map((r, ri) =>
-          r.map((c, ci) => (ri === row && ci === col ? value : c))
-        );
-      }
-      return matrix;
-    });
-    setMatrices(newMatrices);
+    dispatch(updateValue({ matrixIndex, row, col, value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('http://localhost:' + postPort + '/matrices', { matrices });
-      setSubmitted(true)
+      const response = await axios.post(
+        "http://localhost:" + postPort + "/matrices",
+        { matrixArray }
+      );
+      setSubmitted(true);
       const responseData = response.data;
-      const numbers = responseData.split(' ').map(Number);
+      const numbers = responseData.split(" ").map(Number);
 
-      const newResult = result.map(matrix => {
+      const newResult = result.map((matrix) => {
         return matrix.map((row, ri) =>
           row.map((col, ci) => {
             const index = ri * cols + ci;
@@ -49,10 +46,10 @@ function App() {
       });
       setResult(newResult);
       setCalcFinished(true);
-      console.log(result)
+      console.log(result);
     } catch (error) {
-      console.error('Error sending matrices:', error);
-      alert('Failed to send matrices.');
+      console.error("Error sending matrices:", error);
+      alert("Failed to send matrices.");
     }
   };
 
@@ -68,17 +65,14 @@ function App() {
   const handleDimChange = (e) => {
     e.preventDefault();
     if (tempRows % 2 !== 0 || tempCols % 2 !== 0) {
-      alert("Invalid dimensions, must be even and greater than 0")
-      return
+      alert("Invalid dimensions, must be even and greater than 0");
+      return;
     }
-    setCols(tempCols);
-    setRows(tempRows);
-    setMatrices([
-      Array.from({length:tempRows}, () => Array.from({length:tempCols}, ()=>'0')),
-      Array.from({length:tempRows}, () => Array.from({length:tempCols}, ()=>'0'))
-    ]);
+    dispatch(updateDimensions({ tempRows, tempCols }));
     setResult([
-      Array.from({length:tempRows}, () => Array.from({length:tempCols}, ()=>'0'))
+      Array.from({ length: tempRows }, () =>
+        Array.from({ length: tempCols }, () => "0")
+      ),
     ]);
   };
   return (
@@ -86,18 +80,30 @@ function App() {
       <form onSubmit={handleDimChange}>
         <label>
           Rows:
-          <input type="number" value={tempRows} onChange={handleRowChange} min="1" />
+          <input
+            type="number"
+            value={tempRows}
+            onChange={handleRowChange}
+            min="1"
+          />
         </label>
         <label>
           Columns:
-          <input type="number" value={tempCols} onChange={handleColChange} min="1" />
+          <input
+            type="number"
+            value={tempCols}
+            onChange={handleColChange}
+            min="1"
+          />
         </label>
         <button type="submit">Change matrices</button>
       </form>
       <form onSubmit={handleSubmit}>
-        {matrices.map((matrix, matrixIndex) => (
+        {matrixArray?.map((matrix, matrixIndex) => (
           <div key={matrixIndex}>
-            <h2>Enter a {rows}x{cols} Matrix ({matrixIndex + 1})</h2>
+            <h2>
+              Enter a {rows}x{cols} Matrix ({matrixIndex + 1})
+            </h2>
             {matrix.map((row, rowIndex) => (
               <div key={rowIndex}>
                 {row.map((col, colIndex) => (
@@ -105,8 +111,15 @@ function App() {
                     key={`${matrixIndex}-${rowIndex}-${colIndex}`}
                     type="text"
                     value={col}
-                    onChange={(e) => handleChange(matrixIndex, rowIndex, colIndex, e.target.value)}
-                    style={{ width: '50px', marginRight: '10px' }}
+                    onChange={(e) =>
+                      handleChange(
+                        matrixIndex,
+                        rowIndex,
+                        colIndex,
+                        e.target.value
+                      )
+                    }
+                    style={{ width: "50px", marginRight: "10px" }}
                   />
                 ))}
                 <br />
@@ -115,27 +128,27 @@ function App() {
           </div>
         ))}
         <button type="submit">Send Matrices</button>
-        {submitted && 
-        <h3> Matrices Sent!</h3>}
+        {submitted && <h3> Matrices Sent!</h3>}
       </form>
-      {calcFinished&& result.map((matrix, matrixIndex) => (
-    <div key={matrixIndex}>
-      <h2>Result Matrix </h2>
-      <table>
-        <tbody>
-          {matrix.map((row, rowIndex) => (
-            <tr key={rowIndex}>
-              {row.map((col, colIndex) => (
-                <td key={`${matrixIndex}-${rowIndex}-${colIndex}`}>
-                  {col}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  ))}
+      {calcFinished &&
+        result.map((matrix, matrixIndex) => (
+          <div key={matrixIndex}>
+            <h2>Result Matrix </h2>
+            <table>
+              <tbody>
+                {matrix.map((row, rowIndex) => (
+                  <tr key={rowIndex}>
+                    {row.map((col, colIndex) => (
+                      <td key={`${matrixIndex}-${rowIndex}-${colIndex}`}>
+                        {col}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ))}
     </div>
   );
 }

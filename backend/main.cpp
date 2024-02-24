@@ -186,7 +186,7 @@ void handle_request(const std::string &request, ip::tcp::socket &frontend_socket
 
         // Send response with result matrix back to the front-end
         std::string response = matrices.result_matrix.to_string();
-        if (FPGA_IN_LOOP)
+        if (FRONTEND_IN_LOOP)
         {
             send_good_response(frontend_socket, response);
         }

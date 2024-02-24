@@ -9,7 +9,7 @@ function App() {
   const [calcFinished, setCalcFinished] = useState(false);
   const [tempRows, setTempRows] = useState(4);
   const [tempCols, setTempCols] = useState(4);
-  const matrixArray = useSelector((state) => state.matrixArray);
+  const matrices = useSelector((state) => state.matrices);
   const rows = useSelector((state) => state.rows);
   const cols = useSelector((state) => state.cols);
 
@@ -30,7 +30,7 @@ function App() {
     try {
       const response = await axios.post(
         "http://localhost:" + postPort + "/matrices",
-        { matrixArray }
+        { matrices }
       );
       setSubmitted(true);
       const responseData = response.data;
@@ -99,7 +99,7 @@ function App() {
         <button type="submit">Change matrices</button>
       </form>
       <form onSubmit={handleSubmit}>
-        {matrixArray?.map((matrix, matrixIndex) => (
+        {matrices?.map((matrix, matrixIndex) => (
           <div key={matrixIndex}>
             <h2>
               Enter a {rows}x{cols} Matrix ({matrixIndex + 1})

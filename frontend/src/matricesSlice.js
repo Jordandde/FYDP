@@ -3,7 +3,7 @@ import { createSlice } from "@reduxjs/toolkit";
 export const matricesSlice = createSlice({
   name: "matrices",
   initialState: {
-    matrixArray: [
+    matrices: [
       Array.from({ length: 4 }, () => Array.from({ length: 4 }, () => "0")),
       Array.from({ length: 4 }, () => Array.from({ length: 4 }, () => "0")),
     ],
@@ -15,7 +15,7 @@ export const matricesSlice = createSlice({
       const { tempRows, tempCols } = action.payload;
       state.rows = tempRows;
       state.cols = tempCols;
-      state.matrixArray = [
+      state.matrices = [
         Array.from({ length: tempRows }, () =>
           Array.from({ length: tempCols }, () => "0")
         ),
@@ -26,8 +26,8 @@ export const matricesSlice = createSlice({
     },
     updateValue: (state, action) => {
       const { matrixIndex, row, col, value } = action.payload;
-      state.matrixArray[matrixIndex] = state.matrixArray[matrixIndex].map(
-        (r, ri) => r.map((c, ci) => (ri === row && ci === col ? value : c))
+      state.matrices[matrixIndex] = state.matrices[matrixIndex].map((r, ri) =>
+        r.map((c, ci) => (ri === row && ci === col ? value : c))
       );
     },
   },

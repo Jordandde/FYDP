@@ -30,6 +30,7 @@ namespace po = boost::program_options;
 // *********************************************************************
 bool FPGA_IN_LOOP = true;
 bool FRONTEND_IN_LOOP = true;
+bool PRINT_REQUEST = false;
 
 int* create_out_fpga_payload(Matrices &matrices, const size_t out_fpga_payload_size)
 {
@@ -82,7 +83,10 @@ void handle_request(const std::string &request, ip::tcp::socket &frontend_socket
 {
     try
     {
-        // std::cout << "Request received: " << request << std::endl;
+        if (PRINT_REQUEST)
+        {
+            std::cout << "Request received: " << request << std::endl;
+        }
         
         if (request.empty())
         {
@@ -295,6 +299,7 @@ int main(int argc, char* argv[])
         ("help", "produce help message")
         ("no_frontend", "whether or not front-end is in the loop (fake input if this flag is true)")
         ("no_fpga", "whether or not FPGA is in the loop (fake output if this flag is true)")
+        ("print_request", "print the full incoming requests from the frontend (for debugging)")
     ;
 
     po::variables_map vm;
@@ -320,6 +325,12 @@ int main(int argc, char* argv[])
     } else {
         std::cout << "FPGA in the loop" << std::endl;
         FPGA_IN_LOOP = true;
+    }
+
+    if (vm.count("print_request")) {
+        PRINT_REQUEST = true;
+    } else {
+        PRINT_REQUEST = false;
     }
 
     start_server();

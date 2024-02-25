@@ -44,6 +44,8 @@ The `main` program accepts the following command-line arguments:
 
 - `--no_fpga`: If this flag is set, the FPGA is not included in-the-loop and fake output is used instead.
 
+- `--print_request`: If this flag is set, the incoming requests from the frontend will be printed for debugging purposes.
+
 For example, to run the program with no FPGA connected, you would use:
 
 `./main --no_fpga`

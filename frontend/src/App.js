@@ -29,7 +29,6 @@ function App() {
   const dispatch = useDispatch();
 
   const handleChange = (matrixIndex, row, col, value) => {
-    setSubmitted(false);
     setCalcFinished(false);
     dispatch(updateValue({ matrixIndex, row, col, value }));
   };
@@ -41,7 +40,6 @@ function App() {
         "http://localhost:" + postPort + "/matrices",
         { matrices }
       );
-      setSubmitted(true);
       const responseData = response.data;
       const numbers = responseData.split(" ").map(Number);
 

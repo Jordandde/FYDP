@@ -23,9 +23,9 @@ function App() {
   const [tempRows, setTempRows] = useState(rows);
   const [tempCols, setTempCols] = useState(cols);
   const [result, setResult] = useState([
-    Array.from({ length: 4 }, () => Array.from({ length: 4 }, () => "0")),
+    Array.from({ length: rows }, () => Array.from({ length: cols }, () => "0")),
   ]);
-
+  let total = rows * cols < 144;
   const dispatch = useDispatch();
 
   const handleChange = (matrixIndex, row, col, value) => {
@@ -38,7 +38,11 @@ function App() {
     try {
       const response = await axios.post(
         "http://localhost:" + postPort + "/matrices",
-        { matrices }
+        { matrices },
+        {
+          maxContentLength: Infinity,
+          maxBodyLength: Infinity,
+        }
       );
       const responseData = response.data;
       const numbers = responseData.split(" ").map(Number);
@@ -53,7 +57,6 @@ function App() {
       });
       setResult(newResult);
       setCalcFinished(true);
-      console.log(result);
     } catch (error) {
       console.error("Error sending matrices:", error);
       alert("Failed to send matrices.");
@@ -81,6 +84,7 @@ function App() {
         Array.from({ length: tempCols }, () => "0")
       ),
     ]);
+    total = rows * cols < 144;
   };
 
   const handleClear = (e) => {
@@ -101,7 +105,6 @@ function App() {
             justifyContent="flex-end"
             container
             spacing={4}
-            xs
           >
             <Grid item xs>
               <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
@@ -173,17 +176,17 @@ function App() {
         </Toolbar>
       </AppBar>
       <div style={{ padding: "1rem" }}>
-        <form onSubmit={handleSubmit}>
-          {matrices?.map((matrix, matrixIndex) => (
-            <div key={matrixIndex}>
-              <h2>
-                Enter a {rows}x{cols} Matrix ({matrixIndex + 1})
-              </h2>
-              {matrix.map((row, rowIndex) => (
-                <div key={rowIndex}>
-                  <Grid container spacing={1}>
-                    {row.map((col, colIndex) => (
-                      <Grid item xs>
+        {matrices?.map((matrix, matrixIndex) => (
+          <div key={matrixIndex}>
+            <h2>
+              Enter a {rows}x{cols} Matrix ({matrixIndex + 1})
+            </h2>
+            {matrix.map((row, rowIndex) => (
+              <div key={rowIndex}>
+                <Grid container spacing={1}>
+                  {row.map((col, colIndex) => (
+                    <Grid item xs>
+                      {total ? (
                         <TextField
                           key={`${matrixIndex}-${rowIndex}-${colIndex}`}
                           type="number"
@@ -200,15 +203,32 @@ function App() {
                             margin: "10px",
                           }}
                         />
-                      </Grid>
-                    ))}
-                    <br />
-                  </Grid>
-                </div>
-              ))}
-            </div>
-          ))}
-        </form>
+                      ) : (
+                        <input
+                          key={`${matrixIndex}-${rowIndex}-${colIndex}`}
+                          type="number"
+                          value={col}
+                          onChange={(e) =>
+                            handleChange(
+                              matrixIndex,
+                              rowIndex,
+                              colIndex,
+                              e.target.value
+                            )
+                          }
+                          style={{
+                            width: "30px",
+                          }}
+                        />
+                      )}
+                    </Grid>
+                  ))}
+                  <br />
+                </Grid>
+              </div>
+            ))}
+          </div>
+        ))}
         {calcFinished &&
           result.map((matrix, matrixIndex) => (
             <div key={matrixIndex}>
@@ -217,15 +237,27 @@ function App() {
                 <Grid container spacing={1}>
                   {row.map((col, colIndex) => (
                     <Grid item xs>
-                      <TextField
-                        key={`${matrixIndex}-${rowIndex}-${colIndex}`}
-                        type="number"
-                        value={col}
-                        disabled
-                        style={{
-                          margin: "10px",
-                        }}
-                      />
+                      {total ? (
+                        <TextField
+                          key={`${matrixIndex}-${rowIndex}-${colIndex}`}
+                          type="number"
+                          value={col}
+                          disabled
+                          style={{
+                            margin: "10px",
+                          }}
+                        />
+                      ) : (
+                        <input
+                          key={`${matrixIndex}-${rowIndex}-${colIndex}`}
+                          type="number"
+                          value={col}
+                          disabled
+                          style={{
+                            width: "30px",
+                          }}
+                        />
+                      )}
                     </Grid>
                   ))}
                 </Grid>

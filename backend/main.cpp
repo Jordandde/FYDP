@@ -18,6 +18,11 @@
 #define FPGA_ADDR "192.168.1.10"
 #define FPGA_PORT "5001"
 
+#define MAX_DIMS 64*64
+#define REQUEST_OVERHEAD 1024 // For the headers and stuff that come with the request
+#define NUM_DIGITS_MAX 4 // Max number of digits for each matrix entry
+#define RECV_BUF_SIZE (MAX_DIMS * NUM_DIGITS_MAX + REQUEST_OVERHEAD) // Buffer needs to be big enough to receive the entire request
+
 namespace po = boost::program_options;
 
 // *********************************************************************
@@ -247,7 +252,7 @@ void start_server()
             {
                 boost::system::error_code error;
                 size_t bytes_transferred;
-                char buffer[1024]; // Adjust buffer size as needed
+                char buffer[RECV_BUF_SIZE];
                 bytes_transferred = frontend_socket.read_some(boost::asio::buffer(buffer), error);
                 request.append(buffer, buffer + bytes_transferred);
 

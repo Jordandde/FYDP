@@ -182,19 +182,15 @@ void handle_request(const std::string &request, ip::tcp::socket &frontend_socket
                     matrices.result_matrix[i][j] = in_fpga_payload[pos++];
                 }
             }
-            const auto now = std::chrono::high_resolution_clock::now();
-            const std::chrono::duration<double> diff = now - timer;
-            std::cout << "PROFILER - Request to FPGA: " << diff.count() << " seconds." << std::endl;
         }
         else
         {
             // Multiply matrices 1 and 2 and store the result in the result matrix
             matrices.result_matrix = matrices.input_matrix_1 * matrices.input_matrix_2;
-            const auto now = std::chrono::high_resolution_clock::now();
-            const std::chrono::duration<double> diff = now - timer;
-            std::cout << "PROFILER - Request to digital: " << diff.count() << " seconds." << std::endl;
         }
-
+        const auto now = std::chrono::high_resolution_clock::now();
+        const std::chrono::duration<double> diff = now - timer;
+        std::cout << "PROFILER - Request to result: " << diff.count() << " seconds." << std::endl;
         // Print result matrix for debugging
         std::cout << "Result Matrix:" << std::endl;
         std::cout << matrices.result_matrix.to_string() << std::endl;

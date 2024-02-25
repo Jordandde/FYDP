@@ -30,9 +30,40 @@ export const matricesSlice = createSlice({
         r.map((c, ci) => (ri === row && ci === col ? value : c))
       );
     },
+    clear: (state, action) => {
+      const { rows, cols } = action.payload;
+      state.rows = rows;
+      state.cols = cols;
+      state.matrices = [
+        Array.from({ length: rows }, () =>
+          Array.from({ length: cols }, () => "0")
+        ),
+        Array.from({ length: rows }, () =>
+          Array.from({ length: cols }, () => "0")
+        ),
+      ];
+    },
+    randomize: (state, action) => {
+      const { rows, cols } = action.payload;
+      state.rows = rows;
+      state.cols = cols;
+      state.matrices = [
+        Array.from({ length: rows }, () =>
+          Array.from({ length: cols }, () =>
+            String(Math.floor(Math.random() * 10))
+          )
+        ),
+        Array.from({ length: rows }, () =>
+          Array.from({ length: cols }, () =>
+            String(Math.floor(Math.random() * 10))
+          )
+        ),
+      ];
+    },
   },
 });
 
-export const { updateDimensions, updateValue } = matricesSlice.actions;
+export const { updateDimensions, updateValue, clear, randomize } =
+  matricesSlice.actions;
 
 export default matricesSlice.reducer;

@@ -16,7 +16,6 @@ import Grid from "@mui/material/Grid";
 
 function App() {
   let postPort = 0xb00b;
-  const [submitted, setSubmitted] = useState(false);
   const [calcFinished, setCalcFinished] = useState(false);
   const matrices = useSelector((state) => state.matrices);
   const rows = useSelector((state) => state.rows);
@@ -211,37 +210,28 @@ function App() {
               ))}
             </div>
           ))}
-          {submitted && <h3> Matrices Sent!</h3>}
         </form>
         {calcFinished &&
           result.map((matrix, matrixIndex) => (
             <div key={matrixIndex}>
               <h2>Result Matrix </h2>
-              <table>
-                <tbody>
-                  {matrix.map((row, rowIndex) => (
-                    <tr key={rowIndex}>
-                      {row.map((col, colIndex) => (
-                        <TextField
-                          key={`${matrixIndex}-${rowIndex}-${colIndex}`}
-                          type="number"
-                          value={col}
-                          disabled
-                          onChange={(e) =>
-                            handleChange(
-                              matrixIndex,
-                              rowIndex,
-                              colIndex,
-                              e.target.value
-                            )
-                          }
-                          style={{ width: "5rem", marginRight: "10px" }}
-                        />
-                      ))}
-                    </tr>
+              {matrix.map((row, rowIndex) => (
+                <Grid container spacing={1}>
+                  {row.map((col, colIndex) => (
+                    <Grid item xs>
+                      <TextField
+                        key={`${matrixIndex}-${rowIndex}-${colIndex}`}
+                        type="number"
+                        value={col}
+                        disabled
+                        style={{
+                          margin: "10px",
+                        }}
+                      />
+                    </Grid>
                   ))}
-                </tbody>
-              </table>
+                </Grid>
+              ))}
             </div>
           ))}
       </div>

@@ -189,8 +189,8 @@ void handle_request(const std::string &request, ip::tcp::socket &frontend_socket
             matrices.result_matrix = matrices.input_matrix_1 * matrices.input_matrix_2;
         }
         const auto now = std::chrono::high_resolution_clock::now();
-        const std::chrono::duration<double> diff = now - timer;
-        std::cout << "PROFILER - Request to result: " << diff.count() << " seconds." << std::endl;
+        long long diff_us = std::chrono::duration_cast<std::chrono::microseconds>(now - timer).count();
+        std::cout << "PROFILER - Request to result: " << diff_us << " microseconds." << std::endl;
         // Print result matrix for debugging
         std::cout << "Result Matrix:" << std::endl;
         std::cout << matrices.result_matrix.to_string() << std::endl;

@@ -24,7 +24,13 @@ Make sure you have xcode command line tools installed on Mac OS, as well as boos
 
 `brew install boost`
 
-`clang++ -Wall -std=c++17 -o main main.cpp -lboost_system -lboost_program_options && ./main`
+Intel:
+`clang++ -Wall -std=c++17 -o main main.cpp -lboost_system -lboost_program_options`
+
+Apple Silicon:
+`clang++ -Wall -std=c++17 -o main main.cpp -I/opt/homebrew/include -L/opt/homebrew/lib -lboost_system -lboost_program_options`
+
+If you receive errors related to boost not being found, try running `brew list boost` and adding the `-I` and `-L` flags with the locations of the include and lib directories shown.
 
 ## Running
 `./main`
@@ -34,10 +40,12 @@ The `main` program accepts the following command-line arguments:
 
 - `--help`: Produces a help message that lists all the available command-line arguments.
 
-- `--no_frontend`: If this flag is set, the front-end is not included in the loop and fake input is used instead.
+- `--no_frontend`: If this flag is set, the front-end is not included in-the-loop and fake input is used instead.
 
-- `--no_fpga`: If this flag is set, the FPGA is not included in the loop and fake output is used instead.
+- `--no_fpga`: If this flag is set, the FPGA is not included in-the-loop and fake output is used instead.
 
-For example, to run the program with no frontend and no fpga, you would use:
+- `--print_request`: If this flag is set, the incoming requests from the frontend will be printed for debugging purposes.
 
-`./main --no_frontend --no_fpga`
+For example, to run the program with no FPGA connected, you would use:
+
+`./main --no_fpga`

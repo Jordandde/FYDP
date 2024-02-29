@@ -7,7 +7,7 @@
 #include "include/nlohmann/json.hpp"
 #include "matrix.hpp"
 #include "http_stuff.hpp"
-
+#include <chrono>
 
 
 // *********************************************************************
@@ -18,6 +18,11 @@
 #define FPGA_ADDR "192.168.1.10"
 #define FPGA_PORT "5001"
 
+#define MAX_DIMS 64*64
+#define REQUEST_OVERHEAD 1024 // For the headers and stuff that come with the request
+#define NUM_DIGITS_MAX 4 // Max number of digits for each matrix entry
+#define RECV_BUF_SIZE (MAX_DIMS * NUM_DIGITS_MAX + REQUEST_OVERHEAD) // Buffer needs to be big enough to receive the entire request
+
 namespace po = boost::program_options;
 
 // *********************************************************************
@@ -25,6 +30,7 @@ namespace po = boost::program_options;
 // *********************************************************************
 bool FPGA_IN_LOOP = true;
 bool FRONTEND_IN_LOOP = true;
+bool PRINT_REQUEST = false;
 
 int* create_out_fpga_payload(Matrices &matrices, const size_t out_fpga_payload_size)
 {
@@ -77,7 +83,10 @@ void handle_request(const std::string &request, ip::tcp::socket &frontend_socket
 {
     try
     {
-        // std::cout << "Request received: " << request << std::endl;
+        if (PRINT_REQUEST)
+        {
+            std::cout << "Request received: " << request << std::endl;
+        }
         
         if (request.empty())
         {
@@ -95,7 +104,7 @@ void handle_request(const std::string &request, ip::tcp::socket &frontend_socket
             send_method_not_allowed_response(frontend_socket);
             return;
         }
-
+        const auto timer = std::chrono::high_resolution_clock::now();
         // Find the position of the first '{' character after the headers
         size_t json_start_pos = request.find("{");
         if (json_start_pos == std::string::npos)
@@ -179,7 +188,9 @@ void handle_request(const std::string &request, ip::tcp::socket &frontend_socket
             // Multiply matrices 1 and 2 and store the result in the result matrix
             matrices.result_matrix = matrices.input_matrix_1 * matrices.input_matrix_2;
         }
-
+        const auto now = std::chrono::high_resolution_clock::now();
+        long long diff_us = std::chrono::duration_cast<std::chrono::microseconds>(now - timer).count();
+        std::cout << "PROFILER - Request to result: " << diff_us << " microseconds." << std::endl;
         // Print result matrix for debugging
         std::cout << "Result Matrix:" << std::endl;
         std::cout << matrices.result_matrix.to_string() << std::endl;
@@ -247,8 +258,8 @@ void start_server()
             {
                 boost::system::error_code error;
                 size_t bytes_transferred;
-                char buffer[1024]; // Adjust buffer size as needed
-                bytes_transferred = frontend_socket.read_some(boost::asio::buffer(buffer), error);
+                char buffer[RECV_BUF_SIZE];
+                bytes_transferred = frontend_socket.read_some(boost::asio::buffer(buffer, RECV_BUF_SIZE), error);
                 request.append(buffer, buffer + bytes_transferred);
 
                 if (error == boost::asio::error::eof)
@@ -290,6 +301,7 @@ int main(int argc, char* argv[])
         ("help", "produce help message")
         ("no_frontend", "whether or not front-end is in the loop (fake input if this flag is true)")
         ("no_fpga", "whether or not FPGA is in the loop (fake output if this flag is true)")
+        ("print_request", "print the full incoming requests from the frontend (for debugging)")
     ;
 
     po::variables_map vm;
@@ -315,6 +327,12 @@ int main(int argc, char* argv[])
     } else {
         std::cout << "FPGA in the loop" << std::endl;
         FPGA_IN_LOOP = true;
+    }
+
+    if (vm.count("print_request")) {
+        PRINT_REQUEST = true;
+    } else {
+        PRINT_REQUEST = false;
     }
 
     start_server();

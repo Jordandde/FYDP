@@ -17,6 +17,11 @@ The backend should do 4 things:
 ## Technology
 The backend should consist of a simple http server. C++ will be used for this, largely for the sake of speed and being able to work effectively in parallel.
 
+## Autoformatting
+Install clang-format using `brew install clang-format`
+
+Run using `clang-format --style=file -i *.cpp *.hpp`
+
 ## Building
 Make sure you have xcode command line tools installed on Mac OS, as well as boost:
 

@@ -1,14 +1,13 @@
 // *********************************************************************
 // ||                            INCLUDES                             ||
 // *********************************************************************
-#include <iostream>
-#include <boost/program_options.hpp>
-#include <cstdint>
+#include "http_stuff.hpp"
 #include "include/nlohmann/json.hpp"
 #include "matrix.hpp"
-#include "http_stuff.hpp"
+#include <boost/program_options.hpp>
 #include <chrono>
-
+#include <cstdint>
+#include <iostream>
 
 // *********************************************************************
 // ||                             DEFINES                             ||
@@ -18,9 +17,9 @@
 #define FPGA_ADDR "192.168.1.10"
 #define FPGA_PORT "5001"
 
-#define MAX_DIMS 64*64
-#define REQUEST_OVERHEAD 1024 // For the headers and stuff that come with the request
-#define NUM_DIGITS_MAX 4 // Max number of digits for each matrix entry
+#define MAX_DIMS 64 * 64
+#define REQUEST_OVERHEAD 1024                                        // For the headers and stuff that come with the request
+#define NUM_DIGITS_MAX 4                                             // Max number of digits for each matrix entry
 #define RECV_BUF_SIZE (MAX_DIMS * NUM_DIGITS_MAX + REQUEST_OVERHEAD) // Buffer needs to be big enough to receive the entire request
 
 namespace po = boost::program_options;
@@ -32,54 +31,55 @@ bool FPGA_IN_LOOP = true;
 bool FRONTEND_IN_LOOP = true;
 bool PRINT_REQUEST = false;
 
-int* create_out_fpga_payload(Matrices &matrices, const size_t out_fpga_payload_size)
+int* create_out_fpga_payload(Matrices& matrices, const size_t out_fpga_payload_size)
 {
-        int* out_fpga_payload = (int*)malloc(out_fpga_payload_size * sizeof(int)); // Using int sizes for now. Can use smaller sizes if we think it's worth it & after we come up with size constraints
-        int pos = 0;
+    int* out_fpga_payload =
+        (int*)malloc(out_fpga_payload_size * sizeof(int)); // Using int sizes for now. Can use smaller sizes if we think it's worth it & after we come up with size constraints
+    int pos = 0;
 
-        // Copy in dimensions of input matrix 1
-        out_fpga_payload[pos++] = matrices.input_matrix_1.get_num_rows();
-        out_fpga_payload[pos++] = matrices.input_matrix_1.get_num_cols();
-        
-        // Copy in input matrix 1
-        for (int i = 0; i < matrices.input_matrix_1.get_num_rows(); i++)
+    // Copy in dimensions of input matrix 1
+    out_fpga_payload[pos++] = matrices.input_matrix_1.get_num_rows();
+    out_fpga_payload[pos++] = matrices.input_matrix_1.get_num_cols();
+
+    // Copy in input matrix 1
+    for (int i = 0; i < matrices.input_matrix_1.get_num_rows(); i++)
+    {
+        for (int j = 0; j < matrices.input_matrix_1.get_num_cols(); j++)
         {
-            for (int j = 0; j < matrices.input_matrix_1.get_num_cols(); j++)
-            {
-                out_fpga_payload[pos++] = static_cast<int>(matrices.input_matrix_1[i][j]);
-            }
+            out_fpga_payload[pos++] = static_cast<int>(matrices.input_matrix_1[i][j]);
         }
+    }
 
-        // Copy in dimensions of input matrix 2 (transposed)
-        out_fpga_payload[pos++] = matrices.input_matrix_2.get_num_cols();
-        out_fpga_payload[pos++] = matrices.input_matrix_2.get_num_rows();
+    // Copy in dimensions of input matrix 2 (transposed)
+    out_fpga_payload[pos++] = matrices.input_matrix_2.get_num_cols();
+    out_fpga_payload[pos++] = matrices.input_matrix_2.get_num_rows();
 
-        // Copy in input matrix 2 (transposed)
-        for (int j = 0; j < matrices.input_matrix_2.get_num_cols(); j++)
+    // Copy in input matrix 2 (transposed)
+    for (int j = 0; j < matrices.input_matrix_2.get_num_cols(); j++)
+    {
+        for (int i = 0; i < matrices.input_matrix_2.get_num_rows(); i++)
         {
-            for (int i = 0; i < matrices.input_matrix_2.get_num_rows(); i++)
-            {
-                out_fpga_payload[pos++] = static_cast<int>(matrices.input_matrix_2[i][j]);
-            }
+            out_fpga_payload[pos++] = static_cast<int>(matrices.input_matrix_2[i][j]);
         }
+    }
 
-        if (pos != out_fpga_payload_size)
-        {
-            std::cout << "Error: pos = " << pos << ", out_fpga_payload_size = " << out_fpga_payload_size << std::endl;
-        }
+    if (pos != out_fpga_payload_size)
+    {
+        std::cout << "Error: pos = " << pos << ", out_fpga_payload_size = " << out_fpga_payload_size << std::endl;
+    }
 
-        // Print FPGA payload for debugging
-        std::cout << "Out FPGA Payload:" << std::endl;
-        for (int i = 0; i < out_fpga_payload_size; i++)
-        {
-            std::cout << out_fpga_payload[i];
-        }
-        std::cout << std::endl;
+    // Print FPGA payload for debugging
+    std::cout << "Out FPGA Payload:" << std::endl;
+    for (int i = 0; i < out_fpga_payload_size; i++)
+    {
+        std::cout << out_fpga_payload[i];
+    }
+    std::cout << std::endl;
 
-        return out_fpga_payload;
+    return out_fpga_payload;
 }
 
-void handle_request(const std::string &request, ip::tcp::socket &frontend_socket, ip::tcp::socket &fpga_socket)
+void handle_request(const std::string& request, ip::tcp::socket& frontend_socket, ip::tcp::socket& fpga_socket)
 {
     try
     {
@@ -87,7 +87,7 @@ void handle_request(const std::string &request, ip::tcp::socket &frontend_socket
         {
             std::cout << "Request received: " << request << std::endl;
         }
-        
+
         if (request.empty())
         {
             std::cout << "Empty request received." << std::endl;
@@ -135,11 +135,11 @@ void handle_request(const std::string &request, ip::tcp::socket &frontend_socket
 
         // CONVERT FLOATS TO FPGA/HARDWARE FRIENDLY FORMAT, PROBABLY INTS??
         // Let's just start with ints for now. Floats can be handled with fixed precision by mulitplying by factor(s) of 10 and scaling the result accordingly
-        size_t out_fpga_payload_size = (FPGA_PAYLOAD_DIMS_SIZE + matrices.input_matrix_1.get_num_rows() * matrices.input_matrix_1.get_num_cols() + 
-                                    matrices.input_matrix_2.get_num_rows() * matrices.input_matrix_2.get_num_cols());
+        size_t out_fpga_payload_size = (FPGA_PAYLOAD_DIMS_SIZE + matrices.input_matrix_1.get_num_rows() * matrices.input_matrix_1.get_num_cols() +
+                                        matrices.input_matrix_2.get_num_rows() * matrices.input_matrix_2.get_num_cols());
 
         int* out_fpga_payload = create_out_fpga_payload(matrices, out_fpga_payload_size);
-        
+
         if (FPGA_IN_LOOP)
         {
             // Send the payload to the FPGA
@@ -149,7 +149,7 @@ void handle_request(const std::string &request, ip::tcp::socket &frontend_socket
         }
 
         free(out_fpga_payload);
-      
+
         // Receive the result from the FPGA
         size_t in_fpga_payload_size = matrices.result_matrix.get_num_rows() * matrices.result_matrix.get_num_cols();
         int* in_fpga_payload = (int*)malloc(in_fpga_payload_size * sizeof(int));
@@ -161,7 +161,7 @@ void handle_request(const std::string &request, ip::tcp::socket &frontend_socket
             // Send matrices to FPGA for calculation
             std::cout << "Waiting for response from FPGA..." << std::endl;
             size_t bytes_transferred = fpga_socket.read_some(boost::asio::buffer((void*)in_fpga_payload, in_fpga_payload_size * sizeof(int)));
-            (void) bytes_transferred; // maybe do something with this idk
+            (void)bytes_transferred; // maybe do something with this idk
             std::cout << "Received from FPGA..." << std::endl;
             // Print result from FPGA
             std::cout << "In FPGA Payload:" << std::endl;
@@ -202,7 +202,7 @@ void handle_request(const std::string &request, ip::tcp::socket &frontend_socket
             send_good_response(frontend_socket, response);
         }
     }
-    catch (const std::exception &e)
+    catch (const std::exception& e)
     {
         // Send an error response back to the front-end
         std::cout << "Error handling request: " << e.what() << std::endl;
@@ -288,7 +288,7 @@ void start_server()
             }
         }
     }
-    catch (std::exception &e)
+    catch (std::exception& e)
     {
         std::cerr << "Exception: " << e.what() << std::endl;
     }
@@ -297,41 +297,47 @@ void start_server()
 int main(int argc, char* argv[])
 {
     po::options_description desc("Allowed options");
-    desc.add_options()
-        ("help", "produce help message")
-        ("no_frontend", "whether or not front-end is in the loop (fake input if this flag is true)")
-        ("no_fpga", "whether or not FPGA is in the loop (fake output if this flag is true)")
-        ("print_request", "print the full incoming requests from the frontend (for debugging)")
-    ;
+    desc.add_options()("help", "produce help message")("no_frontend", "whether or not front-end is in the loop (fake input if this flag is true)")(
+        "no_fpga", "whether or not FPGA is in the loop (fake output if this flag is true)")("print_request", "print the full incoming requests from the frontend (for debugging)");
 
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
     po::notify(vm);
 
-    if (vm.count("help")) {
+    if (vm.count("help"))
+    {
         std::cout << desc << "\n";
         return 1;
     }
-    
-    if (vm.count("no_frontend")) {
+
+    if (vm.count("no_frontend"))
+    {
         std::cout << "No front-end in the loop " << std::endl;
         FRONTEND_IN_LOOP = false;
-    } else {
+    }
+    else
+    {
         std::cout << "Front-end in the loop" << std::endl;
         FRONTEND_IN_LOOP = true;
     }
 
-    if (vm.count("no_fpga")) {
+    if (vm.count("no_fpga"))
+    {
         std::cout << "No FPGA in the loop " << std::endl;
         FPGA_IN_LOOP = false;
-    } else {
+    }
+    else
+    {
         std::cout << "FPGA in the loop" << std::endl;
         FPGA_IN_LOOP = true;
     }
 
-    if (vm.count("print_request")) {
+    if (vm.count("print_request"))
+    {
         PRINT_REQUEST = true;
-    } else {
+    }
+    else
+    {
         PRINT_REQUEST = false;
     }
 

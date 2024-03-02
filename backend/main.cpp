@@ -7,6 +7,7 @@
 #include <boost/program_options.hpp>
 #include <chrono>
 #include <cstdint>
+#include <fstream>
 #include <iostream>
 
 // *********************************************************************
@@ -30,6 +31,9 @@ namespace po = boost::program_options;
 bool FPGA_IN_LOOP = true;
 bool FRONTEND_IN_LOOP = true;
 bool PRINT_REQUEST = false;
+
+std::vector<std::vector<std::string>> fake_input1;
+std::vector<std::vector<std::string>> fake_input2;
 
 int* create_out_fpga_payload(Matrices& matrices, const size_t out_fpga_payload_size)
 {
@@ -201,6 +205,10 @@ void handle_request(const std::string& request, ip::tcp::socket& frontend_socket
         {
             send_good_response(frontend_socket, response);
         }
+        else
+        {
+            exit(0);
+        }
     }
     catch (const std::exception& e)
     {
@@ -215,90 +223,101 @@ void handle_request(const std::string& request, ip::tcp::socket& frontend_socket
 // Completely AI-cooked, I have no idea what's going on here but it looks alright to me and it works
 void start_server()
 {
-    try
+    while (true)
     {
-        // Create frontend socket and establish connection
-        boost::asio::io_context io;
-        ip::tcp::acceptor acceptor(io, ip::tcp::endpoint(ip::tcp::v4(), POST_PORT));
-        ip::tcp::socket frontend_socket(io);
-        if (FRONTEND_IN_LOOP)
+        try
         {
-            std::cout << "Waiting for client to connect..." << std::endl;
-            acceptor.accept(frontend_socket);
-            std::cout << "Client connected..." << std::endl;
-        }
-        else
-        {
-            std::cout << "Skipping connection to frontend..." << std::endl;
-        }
-
-        // Create FPGA socket and establish connection
-        boost::asio::io_context io_context;
-        ip::tcp::resolver resolver(io_context);
-        ip::tcp::resolver::query query(FPGA_ADDR, FPGA_PORT);
-        ip::tcp::resolver::results_type endpoints = resolver.resolve(query);
-        ip::tcp::socket fpga_socket(io_context);
-        if (FPGA_IN_LOOP)
-        {
-            std::cout << "Connecting to FPGA..." << std::endl;
-            boost::asio::connect(fpga_socket, endpoints);
-            std::cout << "Connected to FPGA..." << std::endl;
-        }
-        else
-        {
-            std::cout << "Skipping connection to FPGA..." << std::endl;
-        }
-
-        // Start handling incoming requests
-        while (true)
-        {
-            // Read request data from the client
-            std::string request;
+            // Create frontend socket and establish connection
+            boost::asio::io_context io;
+            ip::tcp::acceptor acceptor(io, ip::tcp::endpoint(ip::tcp::v4(), POST_PORT));
+            ip::tcp::socket frontend_socket(io);
             if (FRONTEND_IN_LOOP)
             {
-                boost::system::error_code error;
-                size_t bytes_transferred;
-                char buffer[RECV_BUF_SIZE];
-                bytes_transferred = frontend_socket.read_some(boost::asio::buffer(buffer, RECV_BUF_SIZE), error);
-                request.append(buffer, buffer + bytes_transferred);
-
-                if (error == boost::asio::error::eof)
-                {
-                    // Connection closed cleanly by peer
-                    std::cout << "Connection closed by peer." << std::endl;
-                }
-                else if (error)
-                {
-                    // Some other error
-                    throw boost::system::system_error(error); // Rethrow the error
-                }
-                else
-                {
-                    // Trim the request string to actual size
-                    request.resize(bytes_transferred);
-
-                    // Process the request
-                    handle_request(request, frontend_socket, fpga_socket);
-                }
+                std::cout << "Waiting for client to connect..." << std::endl;
+                acceptor.accept(frontend_socket);
+                std::cout << "Client connected..." << std::endl;
             }
             else
             {
-                // Process a dummy request
-                handle_request(std::string(DUMMY_FRONTEND_INPUT), frontend_socket, fpga_socket);
+                std::cout << "Skipping connection to frontend..." << std::endl;
+            }
+
+            // Create FPGA socket and establish connection
+            boost::asio::io_context io_context;
+            ip::tcp::resolver resolver(io_context);
+            ip::tcp::resolver::query query(FPGA_ADDR, FPGA_PORT);
+            ip::tcp::resolver::results_type endpoints = resolver.resolve(query);
+            ip::tcp::socket fpga_socket(io_context);
+            if (FPGA_IN_LOOP)
+            {
+                std::cout << "Connecting to FPGA..." << std::endl;
+                boost::asio::connect(fpga_socket, endpoints);
+                std::cout << "Connected to FPGA..." << std::endl;
+            }
+            else
+            {
+                std::cout << "Skipping connection to FPGA..." << std::endl;
+            }
+
+            // Start handling incoming requests
+            while (true)
+            {
+                // Read request data from the client
+                std::string request;
+                if (FRONTEND_IN_LOOP)
+                {
+                    boost::system::error_code error;
+                    size_t bytes_transferred;
+                    char buffer[RECV_BUF_SIZE];
+                    bytes_transferred = frontend_socket.read_some(boost::asio::buffer(buffer, RECV_BUF_SIZE), error);
+                    request.append(buffer, buffer + bytes_transferred);
+
+                    if (error == boost::asio::error::eof)
+                    {
+                        // Connection closed cleanly by peer
+                        std::cout << "Connection closed by peer. Attempting to reconnect..." << std::endl;
+                        // Sleep for a bit before attempting to reconnect
+                        std::this_thread::sleep_for(std::chrono::seconds(1));
+                        break;
+                    }
+                    else if (error)
+                    {
+                        // Some other error
+                        throw boost::system::system_error(error); // Rethrow the error
+                    }
+                    else
+                    {
+                        // Trim the request string to actual size
+                        request.resize(bytes_transferred);
+
+                        // Process the request
+                        handle_request(request, frontend_socket, fpga_socket);
+                    }
+                }
+                else
+                {
+                    // Process a dummy request
+                    handle_request(convert_txt_matrices_to_http_req(fake_input1, fake_input2), frontend_socket, fpga_socket);
+                }
             }
         }
-    }
-    catch (std::exception& e)
-    {
-        std::cerr << "Exception: " << e.what() << std::endl;
+        catch (std::exception& e)
+        {
+            std::cerr << "Exception: " << e.what() << std::endl;
+        }
     }
 }
 
 int main(int argc, char* argv[])
 {
     po::options_description desc("Allowed options");
-    desc.add_options()("help", "produce help message")("no_frontend", "whether or not front-end is in the loop (fake input if this flag is true)")(
-        "no_fpga", "whether or not FPGA is in the loop (fake output if this flag is true)")("print_request", "print the full incoming requests from the frontend (for debugging)");
+    // clang-format off
+    desc.add_options()
+        ("help", "produce help message")
+        ("no_frontend", po::value<std::string>(), "whether or not front-end is in the loop (fake input if this flag is true)")
+        ("no_fpga", "whether or not FPGA is in the loop (fake output if this flag is true)")
+        ("print_request", "print the full incoming requests from the frontend (for debugging)");
+    // clang-format on
 
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -314,6 +333,35 @@ int main(int argc, char* argv[])
     {
         std::cout << "No front-end in the loop " << std::endl;
         FRONTEND_IN_LOOP = false;
+
+        std::string filename = vm["no_frontend"].as<std::string>();
+        std::ifstream file(filename);
+        if (!file)
+        {
+            std::cerr << "Failed to open file: " << filename << std::endl;
+            return 1;
+        }
+
+        std::vector<std::vector<std::string>>* current_matrix = &fake_input1;
+        std::string line;
+        while (std::getline(file, line))
+        {
+            // If the line is empty, switch to the second matrix
+            if (line.empty())
+            {
+                current_matrix = &fake_input2;
+                continue;
+            }
+
+            std::vector<std::string> row;
+            std::istringstream iss(line);
+            std::string value;
+            while (std::getline(iss, value, ' ')) // Split the line into cells
+            {
+                row.push_back(value);
+            }
+            current_matrix->push_back(row);
+        }
     }
     else
     {

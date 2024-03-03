@@ -284,13 +284,12 @@ void start_server()
                     }
                     else
                     {
-                        // Process the request
-                        // Remove the '~' character
-                        std::size_t last_tilde_pos = request.find_last_of('~');
-                        if (last_tilde_pos != std::string::npos) {
-                            // Truncate the string from the last occurrence of '~' onwards
-                            request.resize(last_tilde_pos);
+                        // Remove anything that might've snuck in after the '}' character
+                        std::size_t closing_pos = request.find_last_of('}');
+                        if (closing_pos != std::string::npos) {
+                            request.resize(closing_pos + 1);
                         }
+                        // Process the request
                         handle_request(request, frontend_socket, fpga_socket);
                     }
                 }

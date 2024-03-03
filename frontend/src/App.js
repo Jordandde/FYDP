@@ -40,6 +40,9 @@ function App() {
         "http://localhost:" + postPort + "/matrices",
         { matrices },
         {
+          headers: {
+            'Content-Type': 'text/plain'
+          },
           maxContentLength: Infinity,
           maxBodyLength: Infinity,
         }

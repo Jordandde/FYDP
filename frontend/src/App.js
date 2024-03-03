@@ -29,6 +29,7 @@ function App() {
   let total = rows * cols < 144;
   const [open, setOpen] = useState(false);
   const [spamMatrix, setSpamMatrix] = useState([ ]);
+  const [spamInput, setSpamInput] = useState([]);
   const [spam, setSpam] = useState(false);
 
   useEffect(() => {
@@ -40,6 +41,7 @@ function App() {
   const toggleDrawer = (newOpen) => () => {
     setOpen(newOpen);
   };
+
   const calibrationMatrix = [
     [['1','2','3','4'],
   ['1','2','3','4'],
@@ -52,9 +54,7 @@ function App() {
   ['1','2','3','4'],
   ]
   ]
-  function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-  } 
+   
   const dispatch = useDispatch();
   const handleChange = (matrixIndex, row, col, value) => {
     setCalcFinished(false);
@@ -113,6 +113,10 @@ function App() {
         let temp = spamMatrix;
         temp.push(newResult[0]);
         setSpamMatrix(temp);
+        let temp2 = spamInput
+        temp2.push(matrices[0])
+        temp2.push(matrices[1])
+        setSpamInput(temp2)
       }
       setCalcFinished(true);
     } catch (error) {
@@ -157,6 +161,7 @@ function App() {
     setSpam(true)
     console.log("spam activated")
     setSpamMatrix([])
+    setSpamInput([])
     for(var i = 0; i < 10; i++) {
       await handleRandomize(e);
     }
@@ -271,11 +276,70 @@ function App() {
     >
       <div style={{ padding: "1rem" }}>
         <button
-        position="sticky"
         onClick={toggleDrawer(false)}
         >exit</button>
     {spamMatrix.map((matrix, matrixIndex) => (
             <div key={matrixIndex+2}>
+            <h2>Input {2*matrixIndex}</h2>
+            {spamInput[2*matrixIndex].map((row, rowIndex) => (
+                <Grid container spacing={1}>
+                  {row.map((col, colIndex) => (
+                    <Grid item xs>
+                      {total ? (
+                        <TextField
+                          key={`${matrixIndex+ 2}-${rowIndex}-${colIndex}`}
+                          type="number"
+                          value={col}
+                          disabled
+                          style={{
+                            margin: "10px",
+                          }}
+                        />
+                      ) : (
+                        <input
+                          key={`${matrixIndex}-${rowIndex}-${colIndex}`}
+                          type="number"
+                          value={col}
+                          disabled
+                          style={{
+                            width: "30px",
+                          }}
+                        />
+                      )}
+                    </Grid>
+                  ))}
+                </Grid>
+              ))}
+            <h2>Input {2*matrixIndex+1}</h2>
+              {spamInput[2*matrixIndex+1].map((row, rowIndex) => (
+                <Grid container spacing={1}>
+                  {row.map((col, colIndex) => (
+                    <Grid item xs>
+                      {total ? (
+                        <TextField
+                          key={`${matrixIndex+ 2}-${rowIndex}-${colIndex}`}
+                          type="number"
+                          value={col}
+                          disabled
+                          style={{
+                            margin: "10px",
+                          }}
+                        />
+                      ) : (
+                        <input
+                          key={`${matrixIndex}-${rowIndex}-${colIndex}`}
+                          type="number"
+                          value={col}
+                          disabled
+                          style={{
+                            width: "30px",
+                          }}
+                        />
+                      )}
+                    </Grid>
+                  ))}
+                </Grid>
+              ))}
               <h2>Result Matrix {matrixIndex + 1}</h2>
               {matrix.map((row, rowIndex) => (
                 <Grid container spacing={1}>

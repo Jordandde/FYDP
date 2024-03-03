@@ -6,18 +6,48 @@
 // *********************************************************************
 // ||                             DEFINES                             ||
 // *********************************************************************
-// For use in lieu of input from frontend
-#define DUMMY_FRONTEND_INPUT                                                                                                                                                       \
-    "POST /matrices "                                                                                                                                                              \
-    "HTTP/"                                                                                                                                                                        \
-    "1.1\n{\"matrices\":[[[\"1\",\"4\",\"3\",\"4\"],[\"1\",\"2\",\"4\",\"4\"],[\"1\",\"2\",\"3\",\"4\"],[\"1\",\"2\",\"3\",\"4\"]],[[\"1\",\"1\",\"3\",\"1\"],[\"1\",\"0\",\"1\"," \
-    "\"2\"],[\"1\",\"2\",\"3\",\"3\"],[\"1\",\"2\",\"0\",\"1\"]]]}"
-
 using namespace boost::asio;
 
 // *********************************************************************
 // ||                            FUNCTIONS                            ||
 // *********************************************************************
+
+// Given two input matrices, convert them to a string that can be used in a POST request. Kinda gross but it works.
+std::string convert_txt_matrices_to_http_req(const std::vector<std::vector<std::string>>& matrix1, const std::vector<std::vector<std::string>>& matrix2)
+{
+    std::string http_req = "POST /matrices HTTP/1.1\n";
+    http_req += "Host: localhost:45067\n";
+    http_req += "Content-Type: application/json\n\n";
+    http_req += "{\"matrices\":[";
+    http_req += "[";
+    for (const auto& row : matrix1)
+    {
+        http_req += "[";
+        for (const auto& cell : row)
+        {
+            http_req += "\"" + cell + "\",";
+        }
+        http_req.pop_back();
+        http_req += "],";
+    }
+    http_req.pop_back();
+    http_req += "],[";
+    for (const auto& row : matrix2)
+    {
+        http_req += "[";
+        for (const auto& cell : row)
+        {
+            http_req += "\"" + cell + "\",";
+        }
+        http_req.pop_back();
+        http_req += "],";
+    }
+    http_req.pop_back();
+    http_req += "]]}";
+
+    return http_req;
+}
+
 void handle_options_request(ip::tcp::socket& socket)
 {
     // Send CORS headers for preflight request

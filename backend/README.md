@@ -45,7 +45,7 @@ The `main` program accepts the following command-line arguments:
 
 - `--help`: Produces a help message that lists all the available command-line arguments.
 
-- `--no_frontend`: If this flag is set, the front-end is not included in-the-loop and fake input is used instead.
+- `--no_frontend`: If this flag is set, the front-end is not included in-the-loop and fake input is used instead. The fake input comes from a text file, which should be specified with this flag. For example, `./main --no_fpga --print_request --no_frontend test_matrices.txt`. The program will terminate after a single calculation.
 
 - `--no_fpga`: If this flag is set, the FPGA is not included in-the-loop and fake output is used instead.
 

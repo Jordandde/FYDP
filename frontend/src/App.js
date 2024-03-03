@@ -280,7 +280,7 @@ function App() {
         >exit</button>
     {spamMatrix.map((matrix, matrixIndex) => (
             <div key={matrixIndex+2}>
-            <h2>Input {2*matrixIndex}</h2>
+            <h2>Input {2*matrixIndex + 1}</h2>
             {spamInput[2*matrixIndex].map((row, rowIndex) => (
                 <Grid container spacing={1}>
                   {row.map((col, colIndex) => (
@@ -310,7 +310,7 @@ function App() {
                   ))}
                 </Grid>
               ))}
-            <h2>Input {2*matrixIndex+1}</h2>
+            <h2>Input {2*matrixIndex+2}</h2>
               {spamInput[2*matrixIndex+1].map((row, rowIndex) => (
                 <Grid container spacing={1}>
                   {row.map((col, colIndex) => (

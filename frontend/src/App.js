@@ -77,8 +77,8 @@ function App() {
   };
   const handleDimChange = (e) => {
     e.preventDefault();
-    if (tempRows % 2 !== 0 || tempCols % 2 !== 0) {
-      alert("Invalid dimensions, must be even and greater than 0");
+    if (tempRows % 2 !== 0 || tempCols % 2 !== 0 || tempRows !== tempCols) {
+      alert("Invalid dimensions, must be equal, even, and greater than 0");
       return;
     }
     dispatch(updateDimensions({ tempRows, tempCols }));

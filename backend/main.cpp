@@ -268,9 +268,9 @@ void start_server()
                 {
                     boost::system::error_code error;
                     size_t bytes_transferred;
-                    char buffer[RECV_BUF_SIZE];
-                    bytes_transferred = frontend_socket.read_some(boost::asio::buffer(buffer, RECV_BUF_SIZE), error);
-                    request.append(buffer, buffer + bytes_transferred);
+                    // Define streambuf with max size
+                    // bytes_transferred = frontend_socket.read_some(boost::asio::buffer(buffer, RECV_BUF_SIZE), error);
+                    boost::asio::read_until(frontend_socket, boost::asio::dynamic_buffer(request), "~");
 
                     if (error == boost::asio::error::eof)
                     {

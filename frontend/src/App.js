@@ -26,13 +26,47 @@ function App() {
     Array.from({ length: rows }, () => Array.from({ length: cols }, () => "0")),
   ]);
   let total = rows * cols < 144;
+
+  const calibrationMatrix = [
+    [['1','2','3','4'],
+  ['1','2','3','4'],
+  ['1','2','3','4'],
+  ['1','2','3','4'],
+  ],
+  [['1','2','3','4'],
+  ['1','2','3','4'],
+  ['1','2','3','4'],
+  ['1','2','3','4'],
+  ]
+  ]
   const dispatch = useDispatch();
 
   const handleChange = (matrixIndex, row, col, value) => {
     setCalcFinished(false);
     dispatch(updateValue({ matrixIndex, row, col, value }));
   };
-
+  const handleCalibrate = async(e) => {
+    e.preventDefault();
+    try {
+      const response = await axios.post(
+        "http://localhost:" + postPort + "/matrices",
+        { calibrationMatrix},
+        {
+          headers: {
+            'Content-Type': 'text/plain'
+          },
+          maxContentLength: Infinity,
+          maxBodyLength: Infinity,
+        }
+      );
+      const responseData = response.data;
+      const numbers = responseData.split(" ").map(Number);
+      console.log(numbers)
+    } catch (error) {
+      console.error("Error sending matrices:", error);
+      alert("Failed to send matrices.");
+    }
+  }
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -156,7 +190,9 @@ function App() {
               >
                 <h3>Send</h3>
               </Button>
+              
             </Grid>
+            
             <Grid item xs>
               <Button
                 color="inherit"
@@ -173,6 +209,15 @@ function App() {
                 onClick={handleRandomize}
               >
                 <h3>Random</h3>
+              </Button>
+            </Grid>
+            <Grid item xs>
+              <Button
+                color="inherit"
+                style={{textTransform: "none"}}
+                onClick={handleCalibrate}
+                >
+                  <h3>Calibrate</h3>
               </Button>
             </Grid>
           </Grid>

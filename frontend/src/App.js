@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState,useEffect } from "react";
 import axios from "axios";
 import { useSelector, useDispatch } from "react-redux";
 import {
@@ -13,6 +13,7 @@ import Toolbar from "@mui/material/Toolbar";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
 import Grid from "@mui/material/Grid";
+import Drawer from "@mui/material/Drawer";
 
 function App() {
   let postPort = 0xb00b;
@@ -26,7 +27,19 @@ function App() {
     Array.from({ length: rows }, () => Array.from({ length: cols }, () => "0")),
   ]);
   let total = rows * cols < 144;
+  const [open, setOpen] = useState(false);
+  const [spamMatrix, setSpamMatrix] = useState([ ]);
+  const [spam, setSpam] = useState(false);
 
+  useEffect(() => {
+    if(spam) {
+      handleSubmit(new Event("click"))
+    }
+  }, [matrices,spam]);
+
+  const toggleDrawer = (newOpen) => () => {
+    setOpen(newOpen);
+  };
   const calibrationMatrix = [
     [['1','2','3','4'],
   ['1','2','3','4'],
@@ -39,12 +52,15 @@ function App() {
   ['1','2','3','4'],
   ]
   ]
+  function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  } 
   const dispatch = useDispatch();
-
   const handleChange = (matrixIndex, row, col, value) => {
     setCalcFinished(false);
     dispatch(updateValue({ matrixIndex, row, col, value }));
   };
+
   const handleCalibrate = async(e) => {
     e.preventDefault();
     try {
@@ -61,7 +77,6 @@ function App() {
       );
       const responseData = response.data;
       const numbers = responseData.split(" ").map(Number);
-      console.log(numbers)
       alert("Calibration complete")
     } catch (error) {
       console.error("Error sending calibration matrices:", error);
@@ -94,6 +109,11 @@ function App() {
         );
       });
       setResult(newResult);
+      if(spam) {
+        let temp = spamMatrix;
+        temp.push(newResult[0]);
+        setSpamMatrix(temp);
+      }
       setCalcFinished(true);
     } catch (error) {
       console.error("Error sending matrices:", error);
@@ -129,9 +149,20 @@ function App() {
     dispatch(clear({ rows, cols }));
   };
 
-  const handleRandomize = (e) => {
+  const handleRandomize = async(e) => {
     dispatch(randomize({ rows, cols }));
   };
+  const handleSpam = async (e) => {
+    e.preventDefault();
+    setSpam(true)
+    console.log("spam activated")
+    setSpamMatrix([])
+    for(var i = 0; i < 10; i++) {
+      await handleRandomize(e);
+    }
+    setSpam(false)
+    setOpen(true)
+  }
 
   return (
     <div className="App">
@@ -221,9 +252,63 @@ function App() {
                   <h3>Calibrate</h3>
               </Button>
             </Grid>
+            <Grid item xs>
+              <Button
+                color="inherit"
+                style={{textTransform: "none"}}
+                onClick={handleSpam}
+                >
+                  <h3>Spam</h3>
+              </Button>
+            </Grid>
           </Grid>
         </Toolbar>
       </AppBar>
+      <Drawer
+      anchor={"bottom"}
+      open={open}
+      onClose={toggleDrawer(false)}
+    >
+      <div style={{ padding: "1rem" }}>
+        <button
+        position="sticky"
+        onClick={toggleDrawer(false)}
+        >exit</button>
+    {spamMatrix.map((matrix, matrixIndex) => (
+            <div key={matrixIndex+2}>
+              <h2>Result Matrix {matrixIndex + 1}</h2>
+              {matrix.map((row, rowIndex) => (
+                <Grid container spacing={1}>
+                  {row.map((col, colIndex) => (
+                    <Grid item xs>
+                      {total ? (
+                        <TextField
+                          key={`${matrixIndex+ 2}-${rowIndex}-${colIndex}`}
+                          type="number"
+                          value={col}
+                          disabled
+                          style={{
+                            margin: "10px",
+                          }}
+                        />
+                      ) : (
+                        <input
+                          key={`${matrixIndex}-${rowIndex}-${colIndex}`}
+                          type="number"
+                          value={col}
+                          disabled
+                          style={{
+                            width: "30px",
+                          }}
+                        />
+                      )}
+                    </Grid>
+                  ))}
+                </Grid>
+              ))}
+            </div>
+          ))}</div>
+    </Drawer>
       <div style={{ padding: "1rem" }}>
         {matrices?.map((matrix, matrixIndex) => (
           <div key={matrixIndex}>

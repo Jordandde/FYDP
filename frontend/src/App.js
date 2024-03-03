@@ -27,6 +27,7 @@ function App() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log(matrices)
     try {
       const response = await axios.post(
         "http://localhost:" + postPort + "/matrices",
@@ -101,10 +102,18 @@ function App() {
       <form onSubmit={handleSubmit}>
         {matrices?.map((matrix, matrixIndex) => (
           <div key={matrixIndex}>
+            {matrixIndex === 0 && 
             <h2>
               Enter a {rows}x{cols} Matrix ({matrixIndex + 1})
             </h2>
-            {matrix.map((row, rowIndex) => (
+
+            }
+            {matrixIndex === 1 && 
+            <h2>
+              Enter a {cols}x{rows} Matrix ({matrixIndex + 1})
+            </h2>
+            }
+            {matrixIndex === 0 && matrix.map((row, rowIndex) => (
               <div key={rowIndex}>
                 {row.map((col, colIndex) => (
                   <input
@@ -116,6 +125,27 @@ function App() {
                         matrixIndex,
                         rowIndex,
                         colIndex,
+                        e.target.value
+                      )
+                    }
+                    style={{ width: "50px", marginRight: "10px" }}
+                  />
+                ))}
+                <br />
+              </div>
+            ))}
+            {matrixIndex === 1 && matrix.map((col, colIndex) => (
+              <div key={colIndex}>
+                {col.map((row, rowIndex) => (
+                  <input
+                    key={`${matrixIndex}-${colIndex}-${rowIndex}`}
+                    type="text"
+                    value={row}
+                    onChange={(e) =>
+                      handleChange(
+                        matrixIndex,
+                        colIndex,
+                        rowIndex,
                         e.target.value
                       )
                     }

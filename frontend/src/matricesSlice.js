@@ -19,8 +19,8 @@ export const matricesSlice = createSlice({
         Array.from({ length: tempRows }, () =>
           Array.from({ length: tempCols }, () => "0")
         ),
-        Array.from({ length: tempRows }, () =>
-          Array.from({ length: tempCols }, () => "0")
+        Array.from({ length: tempCols}, () =>
+          Array.from({ length: tempRows}, () => "0")
         ),
       ];
     },

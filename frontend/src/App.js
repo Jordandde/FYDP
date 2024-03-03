@@ -62,6 +62,7 @@ function App() {
       const responseData = response.data;
       const numbers = responseData.split(" ").map(Number);
       console.log(numbers)
+      alert("Calibration complete")
     } catch (error) {
       console.error("Error sending calibration matrices:", error);
       alert("Failed to send calibration matrices.");

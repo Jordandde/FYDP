@@ -63,8 +63,8 @@ function App() {
       const numbers = responseData.split(" ").map(Number);
       console.log(numbers)
     } catch (error) {
-      console.error("Error sending matrices:", error);
-      alert("Failed to send matrices.");
+      console.error("Error sending calibration matrices:", error);
+      alert("Failed to send calibration matrices.");
     }
   }
   const handleSubmit = async (e) => {

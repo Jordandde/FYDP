@@ -267,10 +267,7 @@ void start_server()
                 if (FRONTEND_IN_LOOP)
                 {
                     boost::system::error_code error;
-                    size_t bytes_transferred;
-                    // Define streambuf with max size
-                    // bytes_transferred = frontend_socket.read_some(boost::asio::buffer(buffer, RECV_BUF_SIZE), error);
-                    boost::asio::read_until(frontend_socket, boost::asio::dynamic_buffer(request), "~");
+                    boost::asio::read_until(frontend_socket, boost::asio::dynamic_buffer(request), "}", error);
 
                     if (error == boost::asio::error::eof)
                     {
@@ -287,10 +284,13 @@ void start_server()
                     }
                     else
                     {
-                        // Trim the request string to actual size
-                        request.resize(bytes_transferred);
-
                         // Process the request
+                        // Remove the '~' character
+                        std::size_t last_tilde_pos = request.find_last_of('~');
+                        if (last_tilde_pos != std::string::npos) {
+                            // Truncate the string from the last occurrence of '~' onwards
+                            request.resize(last_tilde_pos);
+                        }
                         handle_request(request, frontend_socket, fpga_socket);
                     }
                 }

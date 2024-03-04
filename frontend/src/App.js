@@ -147,7 +147,7 @@ function App() {
     }
     dispatch(updateDimensions({ tempRows, tempCols,tempThird }));
     setResult([
-      Array.from({ length: rows}, () =>
+      Array.from({ length: tempRows}, () =>
         Array.from({ length: tempThird}, () => "0")
       ),
     ]);
@@ -299,18 +299,16 @@ function App() {
             <div key={matrixIndex+2}>
             <h2>Input {2*matrixIndex + 1}</h2>
             {spamInput[2*matrixIndex].map((row, rowIndex) => (
-                <Grid container spacing={1}>
+                <Grid container spacing={0} wrap="nowrap">
                   {row.map((col, colIndex) => (
-                    <Grid item xs>
+                    <Grid item xs={0}>
                       {total ? (
                         <TextField
                           key={`${matrixIndex+ 2}-${rowIndex}-${colIndex}`}
                           type="number"
                           value={col}
                           disabled
-                          style={{
-                            margin: "10px",
-                          }}
+                          
                         />
                       ) : (
                         <input
@@ -318,9 +316,7 @@ function App() {
                           type="number"
                           value={col}
                           disabled
-                          style={{
-                            width: "30px",
-                          }}
+                          
                         />
                       )}
                     </Grid>
@@ -329,18 +325,15 @@ function App() {
               ))}
             <h2>Input {2*matrixIndex+2}</h2>
               {spamInput[2*matrixIndex+1].map((row, rowIndex) => (
-                <Grid container spacing={1}>
+                <Grid container spacing={0} wrap="nowrap">
                   {row.map((col, colIndex) => (
-                    <Grid item xs>
+                    <Grid item xs={0}>
                       {total ? (
                         <TextField
                           key={`${matrixIndex+ 2}-${rowIndex}-${colIndex}`}
                           type="number"
                           value={col}
                           disabled
-                          style={{
-                            margin: "10px",
-                          }}
                         />
                       ) : (
                         <input
@@ -348,9 +341,7 @@ function App() {
                           type="number"
                           value={col}
                           disabled
-                          style={{
-                            width: "30px",
-                          }}
+                          
                         />
                       )}
                     </Grid>
@@ -359,18 +350,16 @@ function App() {
               ))}
               <h2>Result Matrix {matrixIndex + 1}</h2>
               {matrix.map((row, rowIndex) => (
-                <Grid container spacing={1}>
+                <Grid container spacing={0} wrap="nowrap">
                   {row.map((col, colIndex) => (
-                    <Grid item xs>
+                    <Grid item xs={0}>
                       {total ? (
                         <TextField
                           key={`${matrixIndex+ 2}-${rowIndex}-${colIndex}`}
                           type="number"
                           value={col}
                           disabled
-                          style={{
-                            margin: "10px",
-                          }}
+                          
                         />
                       ) : (
                         <input
@@ -378,9 +367,7 @@ function App() {
                           type="number"
                           value={col}
                           disabled
-                          style={{
-                            width: "30px",
-                          }}
+                          
                         />
                       )}
                     </Grid>
@@ -397,9 +384,9 @@ function App() {
             </h2>
             {matrices[0]?.map((row, rowIndex) => (
               <div key={rowIndex}>
-                <Grid container spacing={1}>
+                <Grid container spacing={0} wrap="nowrap">
                   {row.map((col, colIndex) => (
-                    <Grid item xs>
+                    <Grid item xs={0}>
                       {total ? (
                         <TextField
                           key={`${0}-${rowIndex}-${colIndex}`}
@@ -413,9 +400,7 @@ function App() {
                               e.target.value
                             )
                           }
-                          style={{
-                            margin: "10px",
-                          }}
+                          
                         />
                       ) : (
                         <input
@@ -430,9 +415,7 @@ function App() {
                               e.target.value
                             )
                           }
-                          style={{
-                            width: "30px",
-                          }}
+                          
                         />
                       )}
                     </Grid>
@@ -448,9 +431,9 @@ function App() {
             </h2>
             {matrices[1]?.map((row, rowIndex) => (
               <div key={rowIndex}>
-                <Grid container spacing={1}>
+                <Grid container spacing={0} wrap="nowrap">
                   {row.map((col, colIndex) => (
-                    <Grid item xs>
+                    <Grid item xs={0}>
                       {total ? (
                         <TextField
                           key={`${1}-${rowIndex}-${colIndex}`}
@@ -464,9 +447,7 @@ function App() {
                               e.target.value
                             )
                           }
-                          style={{
-                            margin: "10px",
-                          }}
+                          
                         />
                       ) : (
                         <input
@@ -481,9 +462,7 @@ function App() {
                               e.target.value
                             )
                           }
-                          style={{
-                            width: "30px",
-                          }}
+                          
                         />
                       )}
                     </Grid>
@@ -498,18 +477,15 @@ function App() {
             <div key={matrixIndex}>
               <h2>{rows}x{third} Result Matrix </h2>
               {matrix.map((row, rowIndex) => (
-                <Grid container spacing={1}>
+                <Grid container spacing={0} wrap="nowrap">
                   {row.map((col, colIndex) => (
-                    <Grid item xs>
+                    <Grid item xs={0}>
                       {total ? (
                         <TextField
                           key={`${matrixIndex}-${rowIndex}-${colIndex}`}
                           type="number"
                           value={col}
                           disabled
-                          style={{
-                            margin: "10px",
-                          }}
                         />
                       ) : (
                         <input
@@ -517,9 +493,7 @@ function App() {
                           type="number"
                           value={col}
                           disabled
-                          style={{
-                            width: "30px",
-                          }}
+                          
                         />
                       )}
                     </Grid>

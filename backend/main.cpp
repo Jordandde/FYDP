@@ -119,10 +119,14 @@ void handle_request(const std::string& request, ip::tcp::socket& frontend_socket
         // Extract the JSON payload from the request and parse it into the Matrices struct
         std::string in_json_payload = request.substr(json_start_pos);
         auto in_matrices_payload = nlohmann::json::parse(in_json_payload)["matrices"];
+        auto calibration_matrix  = nlohmann::json::parse(in_json_payload)["calibrationMatrix"];
 
         std::cout << "Matrices received successfully!" << std::endl;
-
-        if (in_matrices_payload.size() != 2)
+        if (calibration_matrix.size() == 2) {
+            //TODO: insert calibration logic here
+            std::cout << "calibration mode"<<std::endl;
+            in_matrices_payload = calibration_matrix;
+        } else if (in_matrices_payload.size() != 2)
         {
             std::cout << "Expected 2 matrices, received " << in_matrices_payload.size() << " matrices." << std::endl;
             return;

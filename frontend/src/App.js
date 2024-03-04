@@ -191,7 +191,7 @@ function App() {
               </Typography>
             </Grid>
             <Grid item xs>
-              <h3>X</h3>
+              <h3>M</h3>
             </Grid>
             <Grid item xs>
               <TextField
@@ -203,7 +203,7 @@ function App() {
               />
             </Grid>
             <Grid item xs>
-              <h3>Y</h3>
+              <h3>N</h3>
             </Grid>
             <Grid item xs>
               <TextField
@@ -215,7 +215,7 @@ function App() {
               />
             </Grid>
             <Grid item xs>
-              <h3>Z</h3>
+              <h3>P</h3>
             </Grid>
             <Grid item xs>
               <TextField

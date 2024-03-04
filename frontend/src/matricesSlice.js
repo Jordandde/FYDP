@@ -13,7 +13,7 @@ export const matricesSlice = createSlice({
   },
   reducers: {
     updateDimensions: (state, action) => {
-      const { tempRows, tempCols,tempThird } = action.payload;
+      const { tempRows, tempCols, tempThird } = action.payload;
       state.rows = tempRows;
       state.cols = tempCols;
       state.third = tempThird;
@@ -54,12 +54,12 @@ export const matricesSlice = createSlice({
       state.matrices = [
         Array.from({ length: rows }, () =>
           Array.from({ length: cols }, () =>
-            String(Math.floor(Math.random() * 10))
+            String(Math.floor(Math.random() * 4) + 1)
           )
         ),
         Array.from({ length: cols}, () =>
           Array.from({ length: third}, () =>
-            String(Math.floor(Math.random() * 10))
+            String(Math.floor(Math.random() * 4) + 1)
           )
         ),
       ];

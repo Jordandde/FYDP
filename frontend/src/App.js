@@ -28,6 +28,12 @@ function App() {
   const [result, setResult] = useState([
     Array.from({ length: rows }, () => Array.from({ length: third}, () => "0")),
   ]);
+  const [estimate, setEstimate] = useState([
+    Array.from({ length: rows }, () => Array.from({ length: cols }, () => "0")),
+  ]);
+  const [errorPercentage, setErrorPercentage] = useState([
+    Array.from({ length: rows }, () => Array.from({ length: cols }, () => "0")),
+  ]);
   let total = rows * third< 144;
   const [open, setOpen] = useState(false);
   const [spamMatrix, setSpamMatrix] = useState([ ]);
@@ -111,7 +117,41 @@ function App() {
           })
         );
       });
+      let digital = Array.from({ length: rows }, () =>
+        Array.from({ length: cols }, () => 0)
+      );
+      for (let i = 0; i < rows; i++) {
+        for (let j = 0; j < matrices[1][0].length; j++) {
+          for (let k = 0; k < cols; k++) {
+            digital[i][j] +=
+              parseInt(matrices[0][i][k]) * parseInt(matrices[1][k][j]);
+          }
+        }
+      }
       setResult(newResult);
+      const newEsimate = estimate.map((matrix) => {
+        return matrix.map((row, ri) =>
+          row.map((col, ci) => {
+            return digital[ri][ci];
+          })
+        );
+      });
+      setEstimate(newEsimate);
+
+      for (let i = 0; i < rows; i++) {
+        for (let j = 0; j < cols; j++) {
+          digital[i][j] = ((newResult[0][i][j] - digital[i][j]) / digital[i][j]) * 100;
+        }
+      }
+
+      const newError = errorPercentage.map((matrix) => {
+        return matrix.map((row, ri) =>
+          row.map((col, ci) => {
+            return Math.abs(digital[ri][ci]);
+          })
+        );
+      });
+      setErrorPercentage(newError);
       if(spam) {
         let temp = spamMatrix;
         temp.push(newResult[0]);
@@ -478,6 +518,66 @@ function App() {
           result.map((matrix, matrixIndex) => (
             <div key={matrixIndex}>
               <h2>{rows}x{third} Result Matrix </h2>
+              {matrix.map((row, rowIndex) => (
+                <Grid container spacing={0} wrap="nowrap">
+                  {row.map((col, colIndex) => (
+                    <Grid item xs={0}>
+                      {total ? (
+                        <TextField
+                          key={`${matrixIndex}-${rowIndex}-${colIndex}`}
+                          type="number"
+                          value={col}
+                          disabled
+                        />
+                      ) : (
+                        <input
+                          key={`${matrixIndex}-${rowIndex}-${colIndex}`}
+                          type="number"
+                          value={col}
+                          disabled
+                          
+                        />
+                      )}
+                    </Grid>
+                  ))}
+                </Grid>
+              ))}
+            </div>
+          ))}
+        {calcFinished &&
+          estimate.map((matrix, matrixIndex) => (
+            <div key={matrixIndex}>
+              <h2>{rows}x{third} Digital Calculation Matrix </h2>
+              {matrix.map((row, rowIndex) => (
+                <Grid container spacing={0} wrap="nowrap">
+                  {row.map((col, colIndex) => (
+                    <Grid item xs={0}>
+                      {total ? (
+                        <TextField
+                          key={`${matrixIndex}-${rowIndex}-${colIndex}`}
+                          type="number"
+                          value={col}
+                          disabled
+                        />
+                      ) : (
+                        <input
+                          key={`${matrixIndex}-${rowIndex}-${colIndex}`}
+                          type="number"
+                          value={col}
+                          disabled
+                          
+                        />
+                      )}
+                    </Grid>
+                  ))}
+                </Grid>
+              ))}
+            </div>
+          ))}
+        {calcFinished &&
+          errorPercentage.map((matrix, matrixIndex) => (
+            <div key={matrixIndex}>
+              <h2>{rows}x{third} Error Matrix (%) </h2>
               {matrix.map((row, rowIndex) => (
                 <Grid container spacing={0} wrap="nowrap">
                   {row.map((col, colIndex) => (

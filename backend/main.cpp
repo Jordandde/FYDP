@@ -23,6 +23,10 @@
 #define NUM_DIGITS_MAX 4                                             // Max number of digits for each matrix entry
 #define RECV_BUF_SIZE (MAX_DIMS * NUM_DIGITS_MAX + REQUEST_OVERHEAD) // Buffer needs to be big enough to receive the entire request
 
+#define FIXED_POINT_SCALING_FACTOR 1000
+#define ADC_CONVERSION_FACTOR 3125 / (FIXED_POINT_SCALING_FACTOR * FIXED_POINT_SCALING_FACTOR) // ((10.24 * 10 * Nout) / 2^15) * (2^24)/(4.096^2)
+
+
 namespace po = boost::program_options;
 
 // *********************************************************************
@@ -31,6 +35,10 @@ namespace po = boost::program_options;
 bool FPGA_IN_LOOP = true;
 bool FRONTEND_IN_LOOP = true;
 bool PRINT_REQUEST = false;
+bool CALIBRATION_MODE = false;
+
+float calibration_factor = 1.0;
+
 
 std::vector<std::vector<std::string>> fake_input1;
 std::vector<std::vector<std::string>> fake_input2;
@@ -50,7 +58,7 @@ int* create_out_fpga_payload(Matrices& matrices, const size_t out_fpga_payload_s
     {
         for (int j = 0; j < matrices.input_matrix_1.get_num_cols(); j++)
         {
-            out_fpga_payload[pos++] = static_cast<int>(matrices.input_matrix_1[i][j]);
+            out_fpga_payload[pos++] = static_cast<int>(FIXED_POINT_SCALING_FACTOR * matrices.input_matrix_1[i][j]);
         }
     }
 
@@ -63,7 +71,7 @@ int* create_out_fpga_payload(Matrices& matrices, const size_t out_fpga_payload_s
     {
         for (int i = 0; i < matrices.input_matrix_2.get_num_rows(); i++)
         {
-            out_fpga_payload[pos++] = static_cast<int>(matrices.input_matrix_2[i][j]);
+            out_fpga_payload[pos++] = static_cast<int>(FIXED_POINT_SCALING_FACTOR * matrices.input_matrix_2[i][j]);
         }
     }
 
@@ -76,7 +84,7 @@ int* create_out_fpga_payload(Matrices& matrices, const size_t out_fpga_payload_s
     std::cout << "Out FPGA Payload:" << std::endl;
     for (int i = 0; i < out_fpga_payload_size; i++)
     {
-        std::cout << out_fpga_payload[i];
+        std::cout << out_fpga_payload[i]<<" ";
     }
     std::cout << std::endl;
 
@@ -123,10 +131,11 @@ void handle_request(const std::string& request, ip::tcp::socket& frontend_socket
 
         std::cout << "Matrices received successfully!" << std::endl;
         if (calibration_matrix.size() == 2) {
-            //TODO: insert calibration logic here
             std::cout << "calibration mode"<<std::endl;
+            CALIBRATION_MODE = true;
             in_matrices_payload = calibration_matrix;
-        } else if (in_matrices_payload.size() != 2)
+        }
+        else if (in_matrices_payload.size() != 2)
         {
             std::cout << "Expected 2 matrices, received " << in_matrices_payload.size() << " matrices." << std::endl;
             return;
@@ -175,7 +184,7 @@ void handle_request(const std::string& request, ip::tcp::socket& frontend_socket
             std::cout << "In FPGA Payload:" << std::endl;
             for (int i = 0; i < in_fpga_payload_size; i++)
             {
-                std::cout << in_fpga_payload[i];
+                std::cout << in_fpga_payload[i] << " ";
             }
             std::cout << std::endl;
 
@@ -187,7 +196,7 @@ void handle_request(const std::string& request, ip::tcp::socket& frontend_socket
                 {
                     // SCALE RESULTS "12-bit dac with 4.096 reference voltage -> analog switch with 15ohms of resistance
                     // -> analog multipler that divides the result by a factor of 10 -> 16-bit adc with 4.096 reference voltage"
-                    matrices.result_matrix[i][j] = in_fpga_payload[pos++];
+                    matrices.result_matrix[i][j] = calibration_factor * ADC_CONVERSION_FACTOR * in_fpga_payload[pos++];
                 }
             }
         }
@@ -196,6 +205,26 @@ void handle_request(const std::string& request, ip::tcp::socket& frontend_socket
             // Multiply matrices 1 and 2 and store the result in the result matrix
             matrices.result_matrix = matrices.input_matrix_1 * matrices.input_matrix_2;
         }
+
+        if (CALIBRATION_MODE)
+        {
+            Matrix correct_matrix = matrices.input_matrix_1 * matrices.input_matrix_2;
+            // Compare each element of correct matrix and result matrix to determine calibration factor
+            float total_error = 0;
+            for (int i = 0; i < matrices.result_matrix.get_num_rows(); i++)
+            {
+                for (int j = 0; j < matrices.result_matrix.get_num_cols(); j++)
+                {
+                    float error = correct_matrix[i][j] / matrices.result_matrix[i][j];
+                        total_error += error;
+                        std::cout << "error = " << error << std::endl;
+                }
+            }
+            calibration_factor = std::clamp(1.0 / total_error / (matrices.result_matrix.get_num_rows() * matrices.result_matrix.get_num_cols()), 0.95, 1.05);
+            // calibration_factor = total_error / (matrices.result_matrix.get_num_rows() * matrices.result_matrix.get_num_cols());
+            std::cout << "Set calibration factor to " << calibration_factor << std::endl;
+        }
+
         const auto now = std::chrono::high_resolution_clock::now();
         long long diff_us = std::chrono::duration_cast<std::chrono::microseconds>(now - timer).count();
         std::cout << "PROFILER - Request to result: " << diff_us << " microseconds." << std::endl;
@@ -204,13 +233,21 @@ void handle_request(const std::string& request, ip::tcp::socket& frontend_socket
         std::cout << matrices.result_matrix.to_string() << std::endl;
 
         // Send response with result matrix back to the front-end
-        std::string response = matrices.result_matrix.to_string();
+        std::string response = matrices.result_matrix.to_string_with_precision(2);
         if (FRONTEND_IN_LOOP)
         {
             send_good_response(frontend_socket, response);
         }
         else
         {
+            // Print expected result matrix (computed locally)
+            std::cout << "Expected Result Matrix:" << std::endl;
+            std::cout << (matrices.input_matrix_1 * matrices.input_matrix_2).to_string() << std::endl;
+
+            matrices.result_matrix -= (matrices.input_matrix_1 * matrices.input_matrix_2);
+            std::cout << "Error Matrix:" << std::endl;
+            std::cout << matrices.result_matrix.to_string() << std::endl;
+
             exit(0);
         }
     }

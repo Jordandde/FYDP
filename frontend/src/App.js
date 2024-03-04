@@ -200,6 +200,14 @@ function App() {
                 onChange={handleRowChange}
                 min="1"
                 size="small"
+                sx={{
+                  "& input::-webkit-outer-spin-button, & input::-webkit-inner-spin-button": {
+                                           display: "none",
+                                         },
+                 "& input[type=number]": {
+                                           MozAppearance: "textfield",
+                                         },
+                 }}
               />
             </Grid>
             <Grid item xs>
@@ -212,6 +220,14 @@ function App() {
                 onChange={handleColChange}
                 min="1"
                 size="small"
+                sx={{
+                  "& input::-webkit-outer-spin-button, & input::-webkit-inner-spin-button": {
+                                           display: "none",
+                                         },
+                 "& input[type=number]": {
+                                           MozAppearance: "textfield",
+                                         },
+                 }}
               />
             </Grid>
             <Grid item xs>
@@ -224,6 +240,14 @@ function App() {
                 onChange={handleThirdChange}
                 min="1"
                 size="small"
+                sx={{
+                  "& input::-webkit-outer-spin-button, & input::-webkit-inner-spin-button": {
+                                           display: "none",
+                                         },
+                 "& input[type=number]": {
+                                           MozAppearance: "textfield",
+                                         },
+                 }}
               />
             </Grid>
             <Grid item xs>
@@ -400,7 +424,14 @@ function App() {
                               e.target.value
                             )
                           }
-                          
+                          sx={{
+                            "& input::-webkit-outer-spin-button, & input::-webkit-inner-spin-button": {
+                                                     display: "none",
+                                                   },
+                           "& input[type=number]": {
+                                                     MozAppearance: "textfield",
+                                                   },
+                           }} 
                         />
                       ) : (
                         <input
@@ -415,6 +446,12 @@ function App() {
                               e.target.value
                             )
                           }
+                          InputProps={{
+                            style: {
+                              '-webkit-appearance': 'none',
+                              margin: 0,
+                            },
+                          }}
                           
                         />
                       )}
@@ -447,6 +484,14 @@ function App() {
                               e.target.value
                             )
                           }
+                          sx={{
+                            "& input::-webkit-outer-spin-button, & input::-webkit-inner-spin-button": {
+                                                     display: "none",
+                                                   },
+                           "& input[type=number]": {
+                                                     MozAppearance: "textfield",
+                                                   },
+                           }}
                           
                         />
                       ) : (

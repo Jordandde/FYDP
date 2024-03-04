@@ -83,6 +83,24 @@ class Matrix
         return matrix_str;
     }
 
+    // Get string representation of matrix with precision
+    std::string to_string_with_precision(const int n = 2)
+    {
+        std::ostringstream out;
+        out.precision(n);
+        for (const auto& row : matrix)
+        {
+            for (const auto& cell : row)
+            {
+                out << std::fixed << cell;
+                out << " ";
+            }
+            out << "\n";
+        }
+        
+        return std::move(out).str();
+    }
+
     // Get number of rows
     int get_num_rows(void) { return num_rows; }
 
@@ -117,6 +135,27 @@ class Matrix
         }
 
         return result;
+    }
+
+    // Implement - operator to perform matrix subtraction
+    Matrix& operator-=(Matrix&& other)
+    {
+        // Check if the matrices have the same dimensions
+        if (num_rows != other.get_num_rows() || num_cols != other.get_num_cols())
+        {
+            throw std::invalid_argument("Matrices do not have the same dimensions");
+        }
+
+        // Perform matrix subtraction
+        for (int i = 0; i < num_rows; i++)
+        {
+            for (int j = 0; j < num_cols; j++)
+            {
+                matrix[i][j] = matrix[i][j] - other[i][j];
+            }
+        }
+
+        return *this;
     }
 
     // Make matrix iterable

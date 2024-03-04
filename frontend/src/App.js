@@ -21,12 +21,14 @@ function App() {
   const matrices = useSelector((state) => state.matrices);
   const rows = useSelector((state) => state.rows);
   const cols = useSelector((state) => state.cols);
+  const third = useSelector((state) => state.third);
   const [tempRows, setTempRows] = useState(rows);
   const [tempCols, setTempCols] = useState(cols);
+  const [tempThird, setTempThird] = useState(third);
   const [result, setResult] = useState([
-    Array.from({ length: rows }, () => Array.from({ length: cols }, () => "0")),
+    Array.from({ length: rows }, () => Array.from({ length: third}, () => "0")),
   ]);
-  let total = rows * cols < 144;
+  let total = rows * third< 144;
   const [open, setOpen] = useState(false);
   const [spamMatrix, setSpamMatrix] = useState([ ]);
   const [spamInput, setSpamInput] = useState([]);
@@ -99,11 +101,10 @@ function App() {
       );
       const responseData = response.data;
       const numbers = responseData.split(" ").map(Number);
-
       const newResult = result.map((matrix) => {
         return matrix.map((row, ri) =>
           row.map((col, ci) => {
-            const index = ri * cols + ci;
+            const index = ri * third + ci;
             return numbers[index];
           })
         );
@@ -134,27 +135,31 @@ function App() {
     const value = parseInt(e.target.value);
     setTempCols(value);
   };
+  const handleThirdChange = (e) => {
+    const value = parseInt(e.target.value);
+    setTempThird(value);
+  };
   const handleDimChange = (e) => {
     e.preventDefault();
-    if (tempRows % 2 !== 0 || tempCols % 2 !== 0) {
+    if (tempRows % 2 !== 0 || tempCols % 2 !== 0 || tempThird %2 !== 0) {
       alert("Invalid dimensions, must be even and greater than 0");
       return;
     }
-    dispatch(updateDimensions({ tempRows, tempCols }));
+    dispatch(updateDimensions({ tempRows, tempCols,tempThird }));
     setResult([
-      Array.from({ length: tempRows }, () =>
-        Array.from({ length: tempCols }, () => "0")
+      Array.from({ length: rows}, () =>
+        Array.from({ length: tempThird}, () => "0")
       ),
     ]);
-    total = rows * cols < 144;
+    total = rows * third< 144;
   };
 
   const handleClear = (e) => {
-    dispatch(clear({ rows, cols }));
+    dispatch(clear({ rows, cols,third }));
   };
 
   const handleRandomize = async(e) => {
-    dispatch(randomize({ rows, cols }));
+    dispatch(randomize({ rows, cols,third }));
   };
   const handleSpam = async (e) => {
     e.preventDefault();
@@ -186,7 +191,7 @@ function App() {
               </Typography>
             </Grid>
             <Grid item xs>
-              <h3>Rows</h3>
+              <h3>X</h3>
             </Grid>
             <Grid item xs>
               <TextField
@@ -198,13 +203,25 @@ function App() {
               />
             </Grid>
             <Grid item xs>
-              <h3>Columns</h3>
+              <h3>Y</h3>
             </Grid>
             <Grid item xs>
               <TextField
                 type="number"
                 value={tempCols}
                 onChange={handleColChange}
+                min="1"
+                size="small"
+              />
+            </Grid>
+            <Grid item xs>
+              <h3>Z</h3>
+            </Grid>
+            <Grid item xs>
+              <TextField
+                type="number"
+                value={tempThird}
+                onChange={handleThirdChange}
                 min="1"
                 size="small"
               />
@@ -374,24 +391,23 @@ function App() {
           ))}</div>
     </Drawer>
       <div style={{ padding: "1rem" }}>
-        {matrices?.map((matrix, matrixIndex) => (
-          <div key={matrixIndex}>
+          <div key={0}>
             <h2>
-              Enter a {rows}x{cols} Matrix ({matrixIndex + 1})
+              Enter a {rows}x{cols} Matrix 0
             </h2>
-            {matrix.map((row, rowIndex) => (
+            {matrices[0]?.map((row, rowIndex) => (
               <div key={rowIndex}>
                 <Grid container spacing={1}>
                   {row.map((col, colIndex) => (
                     <Grid item xs>
                       {total ? (
                         <TextField
-                          key={`${matrixIndex}-${rowIndex}-${colIndex}`}
+                          key={`${0}-${rowIndex}-${colIndex}`}
                           type="number"
                           value={col}
                           onChange={(e) =>
                             handleChange(
-                              matrixIndex,
+                              0,
                               rowIndex,
                               colIndex,
                               e.target.value
@@ -403,12 +419,63 @@ function App() {
                         />
                       ) : (
                         <input
-                          key={`${matrixIndex}-${rowIndex}-${colIndex}`}
+                          key={`${0}-${rowIndex}-${colIndex}`}
                           type="number"
                           value={col}
                           onChange={(e) =>
                             handleChange(
-                              matrixIndex,
+                              0,
+                              rowIndex,
+                              colIndex,
+                              e.target.value
+                            )
+                          }
+                          style={{
+                            width: "30px",
+                          }}
+                        />
+                      )}
+                    </Grid>
+                  ))}
+                  <br />
+                </Grid>
+              </div>
+            ))}
+              </div>
+            <div key={1}>
+            <h2>
+              Enter a {cols}x{third} Matrix 1
+            </h2>
+            {matrices[1]?.map((row, rowIndex) => (
+              <div key={rowIndex}>
+                <Grid container spacing={1}>
+                  {row.map((col, colIndex) => (
+                    <Grid item xs>
+                      {total ? (
+                        <TextField
+                          key={`${1}-${rowIndex}-${colIndex}`}
+                          type="number"
+                          value={col}
+                          onChange={(e) =>
+                            handleChange(
+                              1,
+                              rowIndex,
+                              colIndex,
+                              e.target.value
+                            )
+                          }
+                          style={{
+                            margin: "10px",
+                          }}
+                        />
+                      ) : (
+                        <input
+                          key={`${1}-${rowIndex}-${colIndex}`}
+                          type="number"
+                          value={col}
+                          onChange={(e) =>
+                            handleChange(
+                              1,
                               rowIndex,
                               colIndex,
                               e.target.value
@@ -426,11 +493,10 @@ function App() {
               </div>
             ))}
           </div>
-        ))}
         {calcFinished &&
           result.map((matrix, matrixIndex) => (
             <div key={matrixIndex}>
-              <h2>Result Matrix </h2>
+              <h2>{rows}x{third} Result Matrix </h2>
               {matrix.map((row, rowIndex) => (
                 <Grid container spacing={1}>
                   {row.map((col, colIndex) => (

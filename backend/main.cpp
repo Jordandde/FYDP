@@ -37,7 +37,8 @@ bool FRONTEND_IN_LOOP = true;
 bool PRINT_REQUEST = false;
 bool CALIBRATION_MODE = false;
 
-float calibration_factor = 1.0;
+float calibration_factor_even = 1.0;
+float calibration_factor_odd = 1.0;
 
 
 std::vector<std::vector<std::string>> fake_input1;
@@ -196,7 +197,14 @@ void handle_request(const std::string& request, ip::tcp::socket& frontend_socket
                 {
                     // SCALE RESULTS "12-bit dac with 4.096 reference voltage -> analog switch with 15ohms of resistance
                     // -> analog multipler that divides the result by a factor of 10 -> 16-bit adc with 4.096 reference voltage"
-                    matrices.result_matrix[i][j] = calibration_factor * ADC_CONVERSION_FACTOR * in_fpga_payload[pos++];
+                    if (i % 2) 
+                    {
+                        matrices.result_matrix[i][j] = calibration_factor_odd * ADC_CONVERSION_FACTOR * in_fpga_payload[pos++];
+                    }
+                    else
+                    {
+                        matrices.result_matrix[i][j] = calibration_factor_even * ADC_CONVERSION_FACTOR * in_fpga_payload[pos++];
+                    }
                 }
             }
         }
@@ -210,19 +218,30 @@ void handle_request(const std::string& request, ip::tcp::socket& frontend_socket
         {
             Matrix correct_matrix = matrices.input_matrix_1 * matrices.input_matrix_2;
             // Compare each element of correct matrix and result matrix to determine calibration factor
-            float total_error = 0;
+            float total_error_even = 0;
+            float total_error_odd = 0;
             for (int i = 0; i < matrices.result_matrix.get_num_rows(); i++)
             {
                 for (int j = 0; j < matrices.result_matrix.get_num_cols(); j++)
                 {
                     float error = correct_matrix[i][j] / matrices.result_matrix[i][j];
-                        total_error += error;
+                        if (i % 2)
+                        {
+                            total_error_odd += error;
+                        }
+                        else
+                        {
+                            total_error_even += error;
+                        }
                         std::cout << "error = " << error << std::endl;
                 }
             }
-            calibration_factor = std::clamp(1.0 / total_error / (matrices.result_matrix.get_num_rows() * matrices.result_matrix.get_num_cols()), 0.95, 1.05);
+            calibration_factor_odd = std::clamp((double)2.0 * total_error_odd / (matrices.result_matrix.get_num_rows() * matrices.result_matrix.get_num_cols()), 0.95, 1.05);
+            calibration_factor_even = std::clamp((double)2.0 * total_error_even / (matrices.result_matrix.get_num_rows() * matrices.result_matrix.get_num_cols()), 0.95, 1.05);
             // calibration_factor = total_error / (matrices.result_matrix.get_num_rows() * matrices.result_matrix.get_num_cols());
-            std::cout << "Set calibration factor to " << calibration_factor << std::endl;
+            std::cout << "Set even calibration factor to " << calibration_factor_even << std::endl;
+            std::cout << "Set odd calibration factor to " << calibration_factor_odd << std::endl;
+            CALIBRATION_MODE = false;
         }
 
         const auto now = std::chrono::high_resolution_clock::now();

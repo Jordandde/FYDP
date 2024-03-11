@@ -2,5 +2,10 @@
 .vscode/settings.json
 backend/backend
 backend/main
+backend/convolution
 frontend/src/App.js
 .DS_Store
+/backend/convolution_files/env
+backend/convolution_files/input.txt
+backend/convolution_files/output_image.txt
+backend/convolution_files/test.png

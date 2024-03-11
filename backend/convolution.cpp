@@ -267,6 +267,7 @@ void handle_request(const std::string& request, ip::tcp::socket& frontend_socket
 
         // Find minimum value in result matrix
         float min_val = 0;
+        float max_val = 0;
         for (int i = 0; i < result_matrix.get_num_rows(); i++)
         {
             for (int j = 0; j < result_matrix.get_num_cols(); j++)
@@ -275,19 +276,19 @@ void handle_request(const std::string& request, ip::tcp::socket& frontend_socket
                 {
                     min_val = result_matrix[i][j];
                 }
+                if (result_matrix[i][j] > max_val)
+                {
+                    max_val = result_matrix[i][j];
+                }
             }
         }
 
-        // Add the minimum value to all elements of the result matrix, capping the maximum to 255
+        // Min-max normalize the result matrix to [0,255]
         for (int i = 0; i < result_matrix.get_num_rows(); i++)
         {
             for (int j = 0; j < result_matrix.get_num_cols(); j++)
             {
-                result_matrix[i][j] -= (min_val/2);
-                if (result_matrix[i][j] > 255)
-                {
-                    result_matrix[i][j] = 255;
-                }
+                result_matrix[i][j] = 255.0F * (result_matrix[i][j] - min_val) / (max_val - min_val);
             }
         }
 

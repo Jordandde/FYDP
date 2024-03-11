@@ -26,7 +26,6 @@
 #define FIXED_POINT_SCALING_FACTOR 1000
 #define ADC_CONVERSION_FACTOR 3125 / (FIXED_POINT_SCALING_FACTOR * FIXED_POINT_SCALING_FACTOR) // ((10.24 * 10 * Nout) / 2^15) * (2^24)/(4.096^2)
 
-
 namespace po = boost::program_options;
 
 // *********************************************************************
@@ -40,10 +39,12 @@ bool CALIBRATION_MODE = false;
 float calibration_factor_even = 1.0;
 float calibration_factor_odd = 1.0;
 
-
 std::vector<std::vector<std::string>> fake_input1;
 std::vector<std::vector<std::string>> fake_input2;
 
+// *********************************************************************
+// ||                           FUNCTIONS                             ||
+// *********************************************************************
 int* create_out_fpga_payload(Matrices& matrices, const size_t out_fpga_payload_size)
 {
     int* out_fpga_payload =
@@ -85,7 +86,7 @@ int* create_out_fpga_payload(Matrices& matrices, const size_t out_fpga_payload_s
     std::cout << "Out FPGA Payload:" << std::endl;
     for (int i = 0; i < out_fpga_payload_size; i++)
     {
-        std::cout << out_fpga_payload[i]<<" ";
+        std::cout << out_fpga_payload[i] << " ";
     }
     std::cout << std::endl;
 
@@ -128,11 +129,12 @@ void handle_request(const std::string& request, ip::tcp::socket& frontend_socket
         // Extract the JSON payload from the request and parse it into the Matrices struct
         std::string in_json_payload = request.substr(json_start_pos);
         auto in_matrices_payload = nlohmann::json::parse(in_json_payload)["matrices"];
-        auto calibration_matrix  = nlohmann::json::parse(in_json_payload)["calibrationMatrix"];
+        auto calibration_matrix = nlohmann::json::parse(in_json_payload)["calibrationMatrix"];
 
         std::cout << "Matrices received successfully!" << std::endl;
-        if (calibration_matrix.size() == 2) {
-            std::cout << "calibration mode"<<std::endl;
+        if (calibration_matrix.size() == 2)
+        {
+            std::cout << "calibration mode" << std::endl;
             CALIBRATION_MODE = true;
             in_matrices_payload = calibration_matrix;
         }
@@ -197,7 +199,7 @@ void handle_request(const std::string& request, ip::tcp::socket& frontend_socket
                 {
                     // SCALE RESULTS "12-bit dac with 4.096 reference voltage -> analog switch with 15ohms of resistance
                     // -> analog multipler that divides the result by a factor of 10 -> 16-bit adc with 4.096 reference voltage"
-                    if (i % 2) 
+                    if (i % 2)
                     {
                         matrices.result_matrix[i][j] = calibration_factor_odd * ADC_CONVERSION_FACTOR * in_fpga_payload[pos++];
                     }
@@ -214,6 +216,8 @@ void handle_request(const std::string& request, ip::tcp::socket& frontend_socket
             matrices.result_matrix = matrices.input_matrix_1 * matrices.input_matrix_2;
         }
 
+        free(in_fpga_payload);
+
         if (CALIBRATION_MODE)
         {
             Matrix correct_matrix = matrices.input_matrix_1 * matrices.input_matrix_2;
@@ -225,15 +229,15 @@ void handle_request(const std::string& request, ip::tcp::socket& frontend_socket
                 for (int j = 0; j < matrices.result_matrix.get_num_cols(); j++)
                 {
                     float error = correct_matrix[i][j] / matrices.result_matrix[i][j];
-                        if (i % 2)
-                        {
-                            total_error_odd += error;
-                        }
-                        else
-                        {
-                            total_error_even += error;
-                        }
-                        std::cout << "error = " << error << std::endl;
+                    if (i % 2)
+                    {
+                        total_error_odd += error;
+                    }
+                    else
+                    {
+                        total_error_even += error;
+                    }
+                    std::cout << "error = " << error << std::endl;
                 }
             }
             calibration_factor_odd = std::clamp((double)2.0 * total_error_odd / (matrices.result_matrix.get_num_rows() * matrices.result_matrix.get_num_cols()), 0.95, 1.05);
@@ -346,7 +350,8 @@ void start_server()
                     {
                         // Remove anything that might've snuck in after the '}' character
                         std::size_t closing_pos = request.find_last_of('}');
-                        if (closing_pos != std::string::npos) {
+                        if (closing_pos != std::string::npos)
+                        {
                             request.resize(closing_pos + 1);
                         }
                         // Process the request

@@ -114,7 +114,7 @@ class Matrix
             }
             out << "\n";
         }
-        
+
         return std::move(out).str();
     }
 

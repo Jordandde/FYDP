@@ -26,7 +26,6 @@
 #define FIXED_POINT_SCALING_FACTOR 10
 #define ADC_CONVERSION_FACTOR 3125 / (FIXED_POINT_SCALING_FACTOR * FIXED_POINT_SCALING_FACTOR) // ((10.24 * 10 * Nout) / 2^15) * (2^24)/(4.096^2)
 
-
 namespace po = boost::program_options;
 
 // *********************************************************************
@@ -39,6 +38,9 @@ bool PRINT_REQUEST = false;
 std::vector<std::vector<std::string>> fake_input1;
 std::vector<std::vector<std::string>> fake_input2;
 
+// *********************************************************************
+// ||                           FUNCTIONS                             ||
+// *********************************************************************
 int* create_out_fpga_convolution_payload(Matrix kernel, Matrix image_data, const size_t out_fpga_payload_size)
 {
     int* out_fpga_payload =
@@ -55,7 +57,6 @@ int* create_out_fpga_convolution_payload(Matrix kernel, Matrix image_data, const
         for (int j = 0; j < kernel.get_num_cols(); j++)
         {
             out_fpga_payload[pos++] = static_cast<int>(FIXED_POINT_SCALING_FACTOR * kernel[i][j]);
-            std::cout << "Kernel[" << i << "][" << j << "] = " << kernel[i][j] << " -> " << out_fpga_payload[pos - 1] << std::endl;
         }
     }
 
@@ -81,7 +82,7 @@ int* create_out_fpga_convolution_payload(Matrix kernel, Matrix image_data, const
     std::cout << "Out FPGA Payload:" << std::endl;
     for (int i = 0; i < out_fpga_payload_size; i++)
     {
-        std::cout << out_fpga_payload[i]<<" ";
+        std::cout << out_fpga_payload[i] << " ";
     }
     std::cout << std::endl;
 
@@ -157,7 +158,6 @@ void handle_request(const std::string& request, ip::tcp::socket& frontend_socket
         std::cout << "Padded Image: " << std::endl;
         std::cout << image.to_string() << std::endl;
 
-
         // Flatten kernel matrix
         Matrix flattened_kernel(1, 9);
 
@@ -175,8 +175,8 @@ void handle_request(const std::string& request, ip::tcp::socket& frontend_socket
         std::cout << "Flattened Kernel: " << std::endl;
         std::cout << flattened_kernel.to_string() << std::endl;
 
-
-        // Iterate through image matrix one row at a time, and multiply by the flattened nine surrounding pixels for each to perform convolution using multiplication. The input matrices should be 1x9 and 9xn respectively, for an output matrix of 1xn.
+        // Iterate through image matrix one row at a time, and multiply by the flattened nine surrounding pixels for each to perform convolution using multiplication. The input
+        // matrices should be 1x9 and 9xn respectively, for an output matrix of 1xn.
         for (int i = 1; i < image.get_num_rows() - 1; i++)
         {
             std::vector<std::vector<float>> image_data;
@@ -196,15 +196,15 @@ void handle_request(const std::string& request, ip::tcp::socket& frontend_socket
             }
 
             // Print image_data
-            std::cout << "Image Data:" << std::endl;
-            for (int i = 0; i < image_data.size(); i++)
-            {
-                for (int j = 0; j < image_data[i].size(); j++)
-                {
-                    std::cout << image_data[i][j] << " ";
-                }
-                std::cout << std::endl;
-            }
+            // std::cout << "Image Data:" << std::endl;
+            // for (int i = 0; i < image_data.size(); i++)
+            // {
+            //     for (int j = 0; j < image_data[i].size(); j++)
+            //     {
+            //         std::cout << image_data[i][j] << " ";
+            //     }
+            //     std::cout << std::endl;
+            // }
 
             // Send image_data for this row alongside the kernel to FPGA for computation
             Matrix image_row_matrix(image_data, true);
@@ -213,7 +213,7 @@ void handle_request(const std::string& request, ip::tcp::socket& frontend_socket
             std::cout << "Image Row Matrix:" << std::endl;
             std::cout << image_row_matrix.to_string() << std::endl;
 
-            size_t out_fpga_payload_size = (FPGA_PAYLOAD_DIMS_SIZE + 9  + image_row_matrix.get_num_rows() * image_row_matrix.get_num_cols());
+            size_t out_fpga_payload_size = (FPGA_PAYLOAD_DIMS_SIZE + 9 + image_row_matrix.get_num_rows() * image_row_matrix.get_num_cols());
             int* out_fpga_payload = create_out_fpga_convolution_payload(flattened_kernel, image_row_matrix, out_fpga_payload_size);
 
             if (FPGA_IN_LOOP)
@@ -227,7 +227,7 @@ void handle_request(const std::string& request, ip::tcp::socket& frontend_socket
             free(out_fpga_payload);
 
             // Receive the result from the FPGA
-            size_t in_fpga_payload_size = flattened_kernel.get_num_cols() * image_row_matrix.get_num_cols();
+            size_t in_fpga_payload_size = image_row_matrix.get_num_cols(); // Result should be a single row of pixels
             int* in_fpga_payload = (int*)malloc(in_fpga_payload_size * sizeof(int));
 
             // std::cout << "in_fpga_payload_size = " << in_fpga_payload_size << std::endl;
@@ -263,6 +263,8 @@ void handle_request(const std::string& request, ip::tcp::socket& frontend_socket
                 // std::cout << result_row.to_string() << std::endl;
                 result_matrix[i - 1] = result_row[0]; // offset by 1 to account for matrix padding
             }
+
+            free(in_fpga_payload);
         }
 
         // Find minimum value in result matrix
@@ -394,7 +396,8 @@ void start_server()
                     {
                         // Remove anything that might've snuck in after the '}' character
                         std::size_t closing_pos = request.find_last_of('}');
-                        if (closing_pos != std::string::npos) {
+                        if (closing_pos != std::string::npos)
+                        {
                             request.resize(closing_pos + 1);
                         }
                         // Process the request

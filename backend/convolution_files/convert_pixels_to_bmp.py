@@ -16,7 +16,7 @@ def read_pixel_values(file_path):
 
 # Example usage:
 # Read space-separated grayscale pixel values from file
-pixel_values, width, height = read_pixel_values('input.txt')
+pixel_values, width, height = read_pixel_values('result_matrix.txt')
 
 # Print image dimensions
 print("Image dimensions:", width, "x", height)

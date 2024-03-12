@@ -141,6 +141,18 @@ class Matrix
         num_rows = matrix.size();
     }
 
+    // Scale a matrix by a linear factor (useful for kernel)
+    void scale(int factor)
+    {
+        for (int i = 0; i < num_rows; i++)
+        {
+            for (int j = 0; j < num_cols; j++)
+            {
+                matrix[i][j] *= factor;
+            }
+        }
+    }
+
     // Implement [] operator
     std::vector<float>& operator[](int index) { return matrix[index]; }
 

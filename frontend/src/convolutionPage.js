@@ -73,7 +73,6 @@ function ConvolutionPage() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    //let convMatrix = [convolutionMatrix];
     let pixelData = Array.from(pixelSrc).map(value => value.toString());
     const pixelMatrix = [];
     // Convert RGB pixel values to grayscale
@@ -95,7 +94,7 @@ for (let i = 0; i < grayscaleData.length; i += 100) {
     try {
         const response = await axios.post(
             "http://localhost:" + postPort + "/matrices",
-            { matrices: [convolutionMatrix, pixelMatrix]},
+            {convmatrices: [convolutionMatrix, pixelMatrix]},
             {
                 headers: {
                 'Content-Type': 'text/plain'

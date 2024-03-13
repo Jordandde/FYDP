@@ -10,3 +10,5 @@ backend/convolution_files/input.txt
 backend/convolution_files/output_image.txt
 backend/convolution_files/test.png
 backend/convolution_files/result_matrix.txt
+.vscode/c_cpp_properties.json
+backend/convolution_files/output.bmp

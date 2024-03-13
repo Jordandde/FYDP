@@ -30,10 +30,10 @@ Make sure you have xcode command line tools installed on Mac OS, as well as boos
 `brew install boost`
 
 Intel:
-`clang++ -Wall -std=c++17 -o main main.cpp -lboost_system -lboost_program_options`
+`clang++ -Wall -std=c++17 -o main src/*.cpp -I include -lboost_system -lboost_program_options`
 
 Apple Silicon:
-`clang++ -Wall -std=c++17 -o main main.cpp -I/opt/homebrew/include -L/opt/homebrew/lib -lboost_system -lboost_program_options`
+`clang++ -Wall -std=c++17 -o main src/*.cpp -I include -I/opt/homebrew/include -L/opt/homebrew/lib -lboost_system -lboost_program_options`
 
 If you receive errors related to boost not being found, try running `brew list boost` and adding the `-I` and `-L` flags with the locations of the include and lib directories shown.
 
@@ -49,8 +49,13 @@ The `main` program accepts the following command-line arguments:
 
 - `--no_fpga`: If this flag is set, the FPGA is not included in-the-loop and fake output is used instead.
 
+- `--conv_mode`: Use in conjunction with `--no_frontend`. If this flag is set, the fake input matrices will be used for convolution rather than matmul.
+
 - `--print_request`: If this flag is set, the incoming requests from the frontend will be printed for debugging purposes.
 
 For example, to run the program with no FPGA connected, you would use:
 
 `./main --no_fpga`
+
+To run the program to perform convolution with no FPGA or frontend connected, you would use:
+`./main --no_frontend convolution_files/test_edge_detect.txt --no_fpga --conv_mode`

@@ -69,7 +69,7 @@ void handle_request(const std::string& request, ip::tcp::socket& frontend_socket
         if (conv_matrices.size() == 2)
         {
             std::cout << "Convolution Mode" << std::endl;
-            Matrix kernel(static_cast<std::vector<std::vector<std::string>>>(conv_matrices[0]));
+            Matrix kernel(static_cast<std::vector<std::vector<std::string>>>(conv_matrices[0][0]));
             Matrix image(static_cast<std::vector<std::vector<std::string>>>(conv_matrices[1]));
             handle_conv_request(frontend_socket, fpga_socket, kernel, image);
         }

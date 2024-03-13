@@ -124,7 +124,7 @@ function App() {
       setCalcFinished(true);
     } catch (error) {
       console.error("Error sending matrices:", error);
-      alert("Failed to send matrices.");
+      // alert("Failed to send matrices.");
     }
   };
 
@@ -169,7 +169,7 @@ function App() {
     console.log("spam activated")
     setSpamMatrix([])
     setSpamInput([])
-    for(var i = 0; i < 10; i++) {
+    for(var i = 0; i < 100; i++) {
       await handleRandomize(e);
     }
     setSpam(false)

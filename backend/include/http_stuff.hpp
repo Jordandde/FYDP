@@ -1,3 +1,5 @@
+#ifndef HTTP_STUFF_HPP
+#define HTTP_STUFF_HPP
 // *********************************************************************
 // ||                            INCLUDES                             ||
 // *********************************************************************
@@ -13,12 +15,19 @@ using namespace boost::asio;
 // *********************************************************************
 
 // Given two input matrices, convert them to a string that can be used in a POST request. Kinda gross but it works.
-std::string convert_txt_matrices_to_http_req(const std::vector<std::vector<std::string>>& matrix1, const std::vector<std::vector<std::string>>& matrix2)
+inline std::string convert_txt_matrices_to_http_req(const std::vector<std::vector<std::string>>& matrix1, const std::vector<std::vector<std::string>>& matrix2, bool conv)
 {
     std::string http_req = "POST /matrices HTTP/1.1\n";
     http_req += "Host: localhost:45067\n";
     http_req += "Content-Type: application/json\n\n";
-    http_req += "{\"matrices\":[";
+    if (conv)
+    {
+        http_req += "{\"convmatrices\":[";
+    }
+    else
+    {
+        http_req += "{\"matrices\":[";
+    }
     http_req += "[";
     for (const auto& row : matrix1)
     {
@@ -48,7 +57,7 @@ std::string convert_txt_matrices_to_http_req(const std::vector<std::vector<std::
     return http_req;
 }
 
-void handle_options_request(ip::tcp::socket& socket)
+inline void handle_options_request(ip::tcp::socket& socket)
 {
     // Send CORS headers for preflight request
     std::string response = "HTTP/1.1 200 OK\r\n";
@@ -59,7 +68,7 @@ void handle_options_request(ip::tcp::socket& socket)
     boost::asio::write(socket, boost::asio::buffer(response));
 }
 
-void send_good_response(ip::tcp::socket& socket, const std::string& response)
+inline void send_good_response(ip::tcp::socket& socket, const std::string& response)
 {
     boost::asio::streambuf response_buf;
     std::ostream response_stream(&response_buf);
@@ -71,7 +80,7 @@ void send_good_response(ip::tcp::socket& socket, const std::string& response)
     boost::asio::write(socket, response_buf);
 }
 
-void send_bad_response(ip::tcp::socket& socket, const std::string& response)
+inline void send_bad_response(ip::tcp::socket& socket, const std::string& response)
 {
     boost::asio::streambuf response_buf;
     std::ostream response_stream(&response_buf);
@@ -83,7 +92,7 @@ void send_bad_response(ip::tcp::socket& socket, const std::string& response)
     boost::asio::write(socket, response_buf);
 }
 
-void send_method_not_allowed_response(ip::tcp::socket& socket)
+inline void send_method_not_allowed_response(ip::tcp::socket& socket)
 {
     std::string response = "HTTP/1.1 405 Method Not Allowed\r\n";
     response += "Content-Type: text/plain\r\n";
@@ -91,3 +100,5 @@ void send_method_not_allowed_response(ip::tcp::socket& socket)
     response += "Content-Length: 0\r\n\r\n";
     boost::asio::write(socket, boost::asio::buffer(response));
 }
+
+#endif

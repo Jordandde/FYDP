@@ -35,6 +35,23 @@ class Matrix
         num_cols = input_matrix[0].size();
     }
 
+    // Float constructor for matrix with transpose option
+    Matrix(std::vector<std::vector<float>> input_matrix, bool transpose)
+    {
+        // Copy in input_matrix transposed
+        for (int i = 0; i < input_matrix[0].size(); i++)
+        {
+            std::vector<float> row;
+            for (int j = 0; j < input_matrix.size(); j++)
+            {
+                row.push_back(input_matrix[j][i]);
+            }
+            matrix.push_back(row);
+        }
+        num_rows = input_matrix[0].size();
+        num_cols = input_matrix.size();
+    }
+
     // String constructor for matrix
     Matrix(std::vector<std::vector<std::string>> input_matrix)
     {
@@ -97,7 +114,7 @@ class Matrix
             }
             out << "\n";
         }
-        
+
         return std::move(out).str();
     }
 
@@ -106,6 +123,35 @@ class Matrix
 
     // Get number of columns
     int get_num_cols(void) { return num_cols; }
+
+    // Pad edges of matrix for convolution
+    void pad(void) // TODO: Made padding size variable
+    {
+        // Pad left and right
+        for (int i = 0; i < num_rows; i++)
+        {
+            matrix[i].insert(matrix[i].begin(), matrix[i][0]);
+            matrix[i].push_back(matrix[i][num_cols - 1]);
+        }
+        num_cols = matrix[0].size();
+
+        // Pad top and bottom
+        matrix.push_back(matrix[num_rows - 1]);
+        matrix.insert(matrix.begin(), matrix[0]);
+        num_rows = matrix.size();
+    }
+
+    // Scale a matrix by a linear factor (useful for kernel)
+    void scale(int factor)
+    {
+        for (int i = 0; i < num_rows; i++)
+        {
+            for (int j = 0; j < num_cols; j++)
+            {
+                matrix[i][j] *= factor;
+            }
+        }
+    }
 
     // Implement [] operator
     std::vector<float>& operator[](int index) { return matrix[index]; }

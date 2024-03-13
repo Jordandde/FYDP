@@ -20,7 +20,7 @@ The backend should consist of a simple http server. C++ will be used for this, l
 ## Autoformatting
 Install clang-format using `brew install clang-format`
 
-Run using `clang-format --style=file -i *.cpp *.hpp`
+Run using `clang-format --style=file -i src/*.cpp include/*.hpp include/*.h`
 
 ## Building
 Make sure you have xcode command line tools installed on Mac OS, as well as boost:

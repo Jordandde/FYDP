@@ -3,16 +3,16 @@
 // *********************************************************************
 // ||                            INCLUDES                             ||
 // *********************************************************************
-#include "http_stuff.hpp"
-#include "nlohmann/json.hpp"
-#include "matrix.hpp"
-#include "matmul.h"
-#include "main.h"
 #include "convolution.h"
+#include "http_stuff.hpp"
+#include "main.h"
+#include "matmul.h"
+#include "matrix.hpp"
+#include "nlohmann/json.hpp"
+#include <chrono>
 #include <cstdint>
 #include <fstream>
 #include <iostream>
-#include <chrono>
 
 // *********************************************************************
 // ||                           GLOBAL VARS                           ||
@@ -40,9 +40,9 @@ extern float calibration_factor_odd;
 
 #define FIXED_POINT_SCALING_FACTOR 1000
 #define ADC_CONVERSION_FACTOR 3125 / (FIXED_POINT_SCALING_FACTOR * FIXED_POINT_SCALING_FACTOR) // ((10.24 * 10 * Nout) / 2^15) * (2^24)/(4.096^2)
-#define CONV_ADC_CONVERSION_FACTOR 3125 / (FIXED_POINT_SCALING_FACTOR * FIXED_POINT_SCALING_FACTOR) // ((10.24 * 10 * Nout) / 2^15) * (2^24)/(4.096^2)
 
 #define CONV_FIXED_POINT_SCALING_FACTOR 10
+#define CONV_ADC_CONVERSION_FACTOR 3125 / (CONV_FIXED_POINT_SCALING_FACTOR * CONV_FIXED_POINT_SCALING_FACTOR) // ((10.24 * 10 * Nout) / 2^15) * (2^24)/(4.096^2)
 #define KERNEL_SCALING_FACTOR 10
 #define KERNEL_SIZE 9
 

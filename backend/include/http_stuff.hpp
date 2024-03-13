@@ -24,7 +24,8 @@ inline std::string convert_txt_matrices_to_http_req(const std::vector<std::vecto
     {
         http_req += "{\"convmatrices\":[";
     }
-    else{
+    else
+    {
         http_req += "{\"matrices\":[";
     }
     http_req += "[";

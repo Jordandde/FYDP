@@ -10,6 +10,12 @@
 // *********************************************************************
 // ||                           GLOBAL VARS                           ||
 // *********************************************************************
+extern bool FPGA_IN_LOOP;
+extern bool FRONTEND_IN_LOOP;
+extern bool CALIBRATION_MODE;
+
+extern float calibration_factor_even;
+extern float calibration_factor_odd;
 
 // *********************************************************************
 // ||                           FUNCTIONS                             ||
